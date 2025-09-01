@@ -632,7 +632,8 @@
 
 
 <script>
-    lucide.createIcons();
+(function() { // IIFE Start
+    "use strict";
 
     // --- MOCK DATA & CONFIG ---
     const MAX_BUDGETS = 5;
@@ -775,6 +776,186 @@
         }
     };
 
+    // --- DATA MANIPULATION (BUSINESS LOGIC) ---
+
+    function createBudget(name, limit) {
+        if (budgetsData.length >= MAX_BUDGETS || !name || limit <= 0) return false;
+        
+        const newBudgetId = name.toLowerCase().replace(/\s+/g, '-') + Date.now();
+        budgetsData.unshift({
+            id: newBudgetId, name: name, spent: 0, limit: limit, icon: 'receipt', color: 'purple', isCardAssigned: false
+        });
+        budgetHistoryData.unshift({
+            date: getCurrentDate(), action: 'Created', details: `${name} Budget (Limit: Rs ${limit.toLocaleString('en-IN')})`
+        });
+        return true;
+    }
+
+    function updateBudget(id, newName, newLimit) {
+        const budget = budgetsData.find(b => b.id === id);
+        if(!budget || !newName || newLimit <= 0) return false;
+
+        const oldLimit = budget.limit;
+        budget.name = newName;
+        budget.limit = newLimit;
+        
+        budgetHistoryData.unshift({
+            date: getCurrentDate(), action: 'Updated', details: `${newName} (Limit: Rs ${oldLimit.toLocaleString('en-IN')} -> Rs ${newLimit.toLocaleString('en-IN')})`
+        });
+        return true;
+    }
+
+    function deleteBudget(id) {
+        const budgetIndex = budgetsData.findIndex(b => b.id === id);
+        if (budgetIndex === -1) return;
+        
+        budgetsData.splice(budgetIndex, 1);
+        budgetHistoryData.unshift({
+            date: getCurrentDate(), action: 'Deleted', details: `Budget item removed.`
+        });
+    }
+
+    function createVault(name, target) {
+        if (!name || target <= 0) return false;
+
+        vaultsData.push({
+            id: name.toLowerCase().replace(/\s+/g, '-') + Date.now(),
+            name: name, current: 0, target: target, icon: 'package-plus', color: 'teal'
+        });
+        vaultHistoryData.unshift({
+            date: getCurrentDate(), action: 'Created', details: `${name} (Target: Rs ${target.toLocaleString('en-IN')})`
+        });
+        return true;
+    }
+
+    function deleteVault(id) {
+        const vaultIndex = vaultsData.findIndex(v => v.id === id);
+        if (vaultIndex === -1) return;
+        
+        const vault = vaultsData[vaultIndex];
+        if (vault.current > 0) {
+            accounts.find(a => a.id === 'current').balance += vault.current;
+        }
+        
+        vaultsData.splice(vaultIndex, 1);
+        vaultHistoryData.unshift({
+            date: getCurrentDate(), action: 'Deleted', details: `Vault "${vault.name}" removed. Rs ${vault.current.toLocaleString('en-IN')} returned.`
+        });
+    }
+
+    function handleVaultTransaction(vaultId, actionType, amount) {
+        const vault = vaultsData.find(v => v.id === vaultId);
+        const currentAccount = accounts.find(a => a.id === 'current');
+
+        if (!vault || !currentAccount || !amount || amount <= 0) return false;
+
+        if (actionType === 'deposit') {
+            if (currentAccount.balance >= amount) {
+                vault.current += amount;
+                currentAccount.balance -= amount;
+                 if (vault.isSavingsAccount) {
+                    savingsAccountHistoryData.unshift({ date: getCurrentDate(), action: 'Deposit', details: `Manual Deposit`, amount: amount });
+                } else {
+                    vaultHistoryData.unshift({ date: getCurrentDate(), action: 'Deposited', details: `Rs ${amount.toLocaleString('en-IN')} to ${vault.name}` });
+                }
+                return true;
+            } else {
+                showToast('Insufficient funds in Current Account.');
+                return false;
+            }
+        } else if (actionType === 'withdraw') {
+            if (vault.current >= amount) {
+                vault.current -= amount;
+                currentAccount.balance += amount;
+                if (vault.isSavingsAccount) {
+                    savingsAccountHistoryData.unshift({ date: getCurrentDate(), action: 'Withdrawal', details: `Manual Withdrawal`, amount: -amount });
+                } else {
+                    vaultHistoryData.unshift({ date: getCurrentDate(), action: 'Withdrew', details: `Rs ${amount.toLocaleString('en-IN')} from ${vault.name}` });
+                }
+                return true;
+            } else {
+                showToast('Insufficient funds in vault.');
+                return false;
+            }
+        }
+    }
+
+    function calculateAndApplyMonthlyReturns() {
+        const savingsAccount = vaultsData.find(v => v.isSavingsAccount);
+        if (savingsAccount) {
+            const monthlyReturnRate = savingsAccount.returnRate / 12;
+            const profit = savingsAccount.current * monthlyReturnRate;
+            savingsAccount.current += profit;
+
+            savingsAccountHistoryData.unshift({
+                date: getCurrentDate(), action: 'Profit Payout', details: `Monthly interest credited`, amount: profit
+            });
+            
+            showToast(`Profit of Rs ${profit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has been added.`);
+        }
+    }
+
+
+    // --- UI RENDERING & HELPERS ---
+    
+    function getCurrentDate() {
+        return new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    
+    function showToast(message) {
+        toastMessage.textContent = message;
+        toastNotification.classList.remove('translate-y-20', 'opacity-0');
+        setTimeout(() => {
+            toastNotification.classList.add('translate-y-20', 'opacity-0');
+        }, 3000); // Hide after 3 seconds
+    }
+
+    function exportToCsv(filename, headers, data) {
+        const rows = data.map(item =>
+            headers.map(header => {
+                let val = item[header.toLowerCase()];
+                if (typeof val === 'number') val = val.toLocaleString('en-IN');
+                return `"${(val || '').toString().replace(/"/g, '""')}"`;
+            }).join(',')
+        );
+        const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n" + rows.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function showPage(targetId) {
+        pageSections.forEach(section => section.classList.toggle('hidden', section.id !== targetId));
+        const targetLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
+        if (targetLink) pageTitle.textContent = targetLink.querySelector('span').textContent;
+        navLinks.forEach(link => {
+            link.classList.remove('bg-slate-700');
+            if (link.dataset.target === targetId) link.classList.add('bg-slate-700');
+        });
+        mobileSidebar.classList.add('-translate-x-full');
+    }
+    
+    function generateThemeSelector() {
+        const currentTheme = loadTheme();
+        themeSelector.innerHTML = '';
+        for (const themeName in themes) {
+            const theme = themes[themeName];
+            const isActive = themeName === currentTheme;
+            const button = document.createElement('button');
+            button.className = `theme-btn p-4 rounded-lg border-2 ${isActive ? 'border-white' : 'border-transparent'} transition-all`;
+            button.dataset.theme = themeName;
+            button.innerHTML = `
+                <div class="h-12 w-full rounded-md mb-2" style="background: linear-gradient(135deg, ${theme['--color-card-gradient-from']}, ${theme['--color-card-gradient-to']})"></div>
+                <p class="font-medium">${themeName}</p>
+            `;
+            themeSelector.appendChild(button);
+        }
+    }
+    
     function applyTheme(themeName) {
         const theme = themes[themeName];
         for (const [key, value] of Object.entries(theme)) {
@@ -792,98 +973,16 @@
         return savedTheme;
     }
 
-    function generateThemeSelector() {
-        const currentTheme = loadTheme();
-        themeSelector.innerHTML = '';
-        for (const themeName in themes) {
-            const theme = themes[themeName];
-            const isActive = themeName === currentTheme;
-            const button = document.createElement('button');
-            button.className = `theme-btn p-4 rounded-lg border-2 ${isActive ? 'border-white' : 'border-transparent'} transition-all`;
-            button.dataset.theme = themeName;
-            button.innerHTML = `
-                <div class="h-12 w-full rounded-md mb-2" style="background: linear-gradient(135deg, ${theme['--color-card-gradient-from']}, ${theme['--color-card-gradient-to']})"></div>
-                <p class="font-medium">${themeName}</p>
-            `;
-            themeSelector.appendChild(button);
-        }
-    }
-
-    themeSelector.addEventListener('click', (e) => {
-        const themeBtn = e.target.closest('.theme-btn');
-        if (themeBtn) {
-            const themeName = themeBtn.dataset.theme;
-            applyTheme(themeName);
-            saveTheme(themeName);
-            document.querySelectorAll('.theme-btn').forEach(btn => {
-                btn.classList.toggle('border-white', btn.dataset.theme === themeName);
-                 btn.classList.toggle('border-transparent', btn.dataset.theme !== themeName);
-            });
-        }
-    });
-
-    // --- MAIN FUNCTIONS ---
-    function getCurrentDate() {
-        return new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-    
-    function showToast(message) {
-        toastMessage.textContent = message;
-        toastNotification.classList.remove('translate-y-20', 'opacity-0');
-        setTimeout(() => {
-            toastNotification.classList.add('translate-y-20', 'opacity-0');
-        }, 3000); // Hide after 3 seconds
-    }
-
-    function exportToCsv(filename, headers, data) {
-        const rows = data.map(item =>
-            headers.map(header => {
-                let val = item[header.toLowerCase()];
-                if (typeof val === 'number') {
-                    val = val.toLocaleString('en-IN');
-                }
-                return `"${(val || '').toString().replace(/"/g, '""')}"`;
-            }).join(',')
-        );
-        const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n" + rows.join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    function showPage(targetId) {
-        pageSections.forEach(section => {
-            section.classList.toggle('hidden', section.id !== targetId);
-        });
-        const targetLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
-        if (targetLink) {
-            pageTitle.textContent = targetLink.querySelector('span').textContent;
-        }
-        navLinks.forEach(link => {
-            link.classList.remove('bg-slate-700');
-            if (link.dataset.target === targetId) {
-                link.classList.add('bg-slate-700');
-            }
-        });
-        mobileSidebar.classList.add('-translate-x-full');
-    }
-
     function updateUI() {
         rebuildCardAccounts();
+        
+        // Fallback for active card account
         const activeAccount = accounts.find(acc => acc.id === activeAccountId);
-        if (activeAccount) {
-            activeAccountName.textContent = activeAccount.name;
-            activeAccountNameControl.textContent = activeAccount.name;
-        } else { // Fallback if active card account was deleted
-            activeAccountId = 'current';
-            const currentAcc = accounts.find(acc => acc.id === 'current');
-            activeAccountName.textContent = currentAcc.name;
-            activeAccountNameControl.textContent = currentAcc.name;
-        }
+        if (!activeAccount) activeAccountId = 'current';
+        
+        const currentActiveAccount = accounts.find(acc => acc.id === activeAccountId);
+        activeAccountName.textContent = currentActiveAccount.name;
+        activeAccountNameControl.textContent = currentActiveAccount.name;
         
         cardBalance.textContent = `Rs ${accounts.find(a => a.id === 'current').balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         cardFrozenOverlay.classList.toggle('hidden', !isCardFrozen);
@@ -891,22 +990,23 @@
         freezeToggle.checked = isCardFrozen;
         [cardDisplay, cardDisplayControl].forEach(el => el.classList.toggle('grayscale', isCardFrozen));
 
+        // Render page-specific components
         populateAccountSelector();
         renderDashboardItems();
-        renderBudgetTotals();
         renderBudgets();
+        renderVaults();
+        renderAllHistory();
+        populateTransactions();
+
+        lucide.createIcons();
     }
 
-    // Rebuild the list of accounts assignable to the card
     function rebuildCardAccounts() {
         const assignedBudgets = budgetsData.filter(b => b.isCardAssigned);
         const currentAccount = { id: 'current', name: 'Current Account', balance: accounts.find(a=>a.id==='current').balance, type: 'account' };
         
         accounts = [currentAccount, ...assignedBudgets.map(b => ({
-            id: b.id,
-            name: `${b.name} Jar`,
-            balance: b.limit - b.spent,
-            type: 'budget'
+            id: b.id, name: `${b.name} Jar`, balance: b.limit - b.spent, type: 'budget'
         }))];
     }
 
@@ -925,7 +1025,6 @@
                 </label>
             `);
         });
-        lucide.createIcons();
     }
     
     function populateTransactions() {
@@ -995,8 +1094,6 @@
         
         const totalSavedVaultsPage = document.getElementById('total-saved-vaults-page');
         if(totalSavedVaultsPage) totalSavedVaultsPage.textContent = `Rs ${totalSaved.toLocaleString('en-IN')}`;
-
-        lucide.createIcons();
     }
     
     function renderBudgetTotals() {
@@ -1070,7 +1167,6 @@
         }
 
         renderBudgetTotals();
-        lucide.createIcons();
     }
 
     function renderVaults() {
@@ -1132,7 +1228,6 @@
                 </div>
             `);
         });
-        lucide.createIcons();
     }
     
     function renderAllHistory() {
@@ -1176,296 +1271,228 @@
         });
     }
 
-    function calculateAndApplyMonthlyReturns() {
-        const savingsAccount = vaultsData.find(v => v.isSavingsAccount);
-        if (savingsAccount) {
-            const monthlyReturnRate = savingsAccount.returnRate / 12;
-            const profit = savingsAccount.current * monthlyReturnRate;
-            savingsAccount.current += profit;
-
-            savingsAccountHistoryData.unshift({
-                date: getCurrentDate(),
-                action: 'Profit Payout',
-                details: `Monthly interest credited`,
-                amount: profit,
-            });
-            
-            showToast(`Profit of Rs ${profit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has been added.`);
-            
-            updateUI();
-            renderAllHistory();
-            renderVaults();
-        }
-    }
 
     // --- EVENT LISTENERS ---
-    document.body.addEventListener('click', (e) => {
-        // Navigation
-        const navLink = e.target.closest('.nav-link');
-        if (navLink) {
-            e.preventDefault();
-            showPage(navLink.dataset.target);
-        }
-
-        // New Item Buttons
-        if (e.target.closest('#new-vault-btn')) newVaultModal.classList.remove('hidden');
-        if (e.target.closest('#new-budget-btn')) newBudgetModal.classList.remove('hidden');
-
-        // Modal Close Buttons
-        const modal = e.target.closest('.fixed.inset-0');
-        if (e.target.dataset.action === 'close' || e.target === modal) {
-            modal.classList.add('hidden');
-        }
-
-        // Update Budget Button
-        const updateBtn = e.target.closest('.update-budget-btn');
-        if(updateBtn) {
-            const budgetId = updateBtn.dataset.id;
-            const budget = budgetsData.find(b => b.id === budgetId);
-            if(budget) {
-                document.getElementById('update-budget-id').value = budget.id;
-                document.getElementById('update-budget-name').value = budget.name;
-                document.getElementById('update-budget-limit').value = budget.limit;
-                updateBudgetModal.classList.remove('hidden');
+    function setupEventListeners() {
+        document.body.addEventListener('click', (e) => {
+            // Navigation
+            const navLink = e.target.closest('.nav-link');
+            if (navLink) {
+                e.preventDefault();
+                showPage(navLink.dataset.target);
             }
-        }
 
-        // Vault Action Button (Deposit/Withdraw)
-        const vaultActionBtn = e.target.closest('.vault-action-btn');
-        if(vaultActionBtn) {
-            const vaultId = vaultActionBtn.dataset.id;
-            const actionType = vaultActionBtn.dataset.type;
-            const vault = vaultsData.find(v => v.id === vaultId);
-            if(vault) {
-                document.getElementById('vault-action-title').textContent = `${actionType.charAt(0).toUpperCase() + actionType.slice(1)} to ${vault.name}`;
-                document.getElementById('vault-action-id').value = vault.id;
-                document.getElementById('vault-action-type').value = actionType;
-                document.getElementById('vault-action-submit').textContent = `Confirm ${actionType.charAt(0).toUpperCase() + actionType.slice(1)}`;
-                vaultActionModal.classList.remove('hidden');
+            // New Item Buttons
+            if (e.target.closest('#new-vault-btn')) {
+                newVaultModal.classList.remove('hidden');
+                document.getElementById('vault-name').focus();
             }
-        }
+            if (e.target.closest('#new-budget-btn')) {
+                newBudgetModal.classList.remove('hidden');
+                document.getElementById('budget-name').focus();
+            }
 
-        // Delete Item Button
-        const deleteBtn = e.target.closest('.delete-item-btn');
-        if (deleteBtn) {
-            itemToDelete = { id: deleteBtn.dataset.id, type: deleteBtn.dataset.type };
-            const item = itemToDelete.type === 'budget' 
-                ? budgetsData.find(b => b.id === itemToDelete.id)
-                : vaultsData.find(v => v.id === itemToDelete.id);
+            // Modal Close Buttons
+            const modal = e.target.closest('.fixed.inset-0');
+            if (e.target.dataset.action === 'close' || e.target === modal) {
+                modal.classList.add('hidden');
+            }
+
+            // Update Budget Button
+            const updateBtn = e.target.closest('.update-budget-btn');
+            if(updateBtn) {
+                const budgetId = updateBtn.dataset.id;
+                const budget = budgetsData.find(b => b.id === budgetId);
+                if(budget) {
+                    document.getElementById('update-budget-id').value = budget.id;
+                    document.getElementById('update-budget-name').value = budget.name;
+                    document.getElementById('update-budget-limit').value = budget.limit;
+                    updateBudgetModal.classList.remove('hidden');
+                }
+            }
+
+            // Vault Action Button (Deposit/Withdraw)
+            const vaultActionBtn = e.target.closest('.vault-action-btn');
+            if(vaultActionBtn) {
+                const vaultId = vaultActionBtn.dataset.id;
+                const actionType = vaultActionBtn.dataset.type;
+                const vault = vaultsData.find(v => v.id === vaultId);
+                if(vault) {
+                    document.getElementById('vault-action-title').textContent = `${actionType.charAt(0).toUpperCase() + actionType.slice(1)} to ${vault.name}`;
+                    document.getElementById('vault-action-id').value = vault.id;
+                    document.getElementById('vault-action-type').value = actionType;
+                    document.getElementById('vault-action-submit').textContent = `Confirm ${actionType.charAt(0).toUpperCase() + actionType.slice(1)}`;
+                    vaultActionModal.classList.remove('hidden');
+                    document.getElementById('vault-action-amount').focus();
+                }
+            }
+
+            // Delete Item Button
+            const deleteBtn = e.target.closest('.delete-item-btn');
+            if (deleteBtn) {
+                itemToDelete = { id: deleteBtn.dataset.id, type: deleteBtn.dataset.type };
+                const item = itemToDelete.type === 'budget' 
+                    ? budgetsData.find(b => b.id === itemToDelete.id)
+                    : vaultsData.find(v => v.id === itemToDelete.id);
+                
+                if (item.isSavingsAccount) {
+                    alert("The main Savings Account cannot be deleted.");
+                    return;
+                }
+
+                document.getElementById('confirm-delete-title').textContent = `Delete ${item.name}?`;
+                let message = `This will permanently delete the ${itemToDelete.type}.`;
+                if (itemToDelete.type === 'vault' && item.current > 0) {
+                    message += ` The remaining balance of Rs ${item.current.toLocaleString('en-IN')} will be returned to your Current Account.`
+                }
+                document.getElementById('confirm-delete-message').textContent = message;
+                confirmDeleteModal.classList.remove('hidden');
+            }
+
+            // Card Assignment Button
+            const assignBtn = e.target.closest('.card-assign-btn');
+            if (assignBtn) {
+                const budgetId = assignBtn.dataset.id;
+                const action = assignBtn.dataset.action;
+                const budget = budgetsData.find(b => b.id === budgetId);
+                if (budget) {
+                    budget.isCardAssigned = (action === 'assign');
+                    updateUI();
+                }
+            }
+        });
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            const { id, type } = itemToDelete;
+            if (type === 'budget') {
+                deleteBudget(id);
+            } else if (type === 'vault') {
+                deleteVault(id);
+            }
             
-            if (item.isSavingsAccount) {
-                alert("The main Savings Account cannot be deleted.");
-                return;
-            }
+            confirmDeleteModal.classList.add('hidden');
+            updateUI();
+            itemToDelete = { id: null, type: null };
+        });
 
-            document.getElementById('confirm-delete-title').textContent = `Delete ${item.name}?`;
-            let message = `This will permanently delete the ${itemToDelete.type}.`;
-            if (itemToDelete.type === 'vault' && item.current > 0) {
-                message += ` The remaining balance of Rs ${item.current.toLocaleString('en-IN')} will be returned to your Current Account.`
-            }
-            document.getElementById('confirm-delete-message').textContent = message;
-            confirmDeleteModal.classList.remove('hidden');
-        }
-
-        // Card Assignment Button
-        const assignBtn = e.target.closest('.card-assign-btn');
-        if (assignBtn) {
-            const budgetId = assignBtn.dataset.id;
-            const action = assignBtn.dataset.action;
-            const budget = budgetsData.find(b => b.id === budgetId);
-            if (budget) {
-                budget.isCardAssigned = (action === 'assign');
+        accountSelector.addEventListener('change', (e) => {
+            if(e.target.name === 'activeAccount') {
+                activeAccountId = e.target.value;
                 updateUI();
             }
-        }
-    });
-
-    confirmDeleteBtn.addEventListener('click', () => {
-        const { id, type } = itemToDelete;
-        if (type === 'budget') {
-            budgetsData = budgetsData.filter(b => b.id !== id);
-            budgetHistoryData.unshift({
-                date: getCurrentDate(), action: 'Deleted', details: `Budget item removed.`
-            });
-        } else if (type === 'vault') {
-            const vault = vaultsData.find(v => v.id === id);
-            if (vault.current > 0) {
-                accounts.find(a => a.id === 'current').balance += vault.current;
+        });
+        
+        freezeToggle.addEventListener('change', () => { isCardFrozen = !isCardFrozen; updateUI(); });
+        
+        locateCardBtnSettings.addEventListener('click', () => mapModal.classList.remove('hidden'));
+        closeMapModalBtn.addEventListener('click', () => mapModal.classList.add('hidden'));
+        
+        mobileMenuButton.addEventListener('click', () => mobileSidebar.classList.remove('-translate-x-full'));
+        closeMobileMenuButton.addEventListener('click', () => mobileSidebar.classList.add('-translate-x-full'));
+        
+        newVaultForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = e.target.elements['vault-name'].value;
+            const target = parseFloat(e.target.elements['vault-target'].value);
+            if (createVault(name, target)) {
+                updateUI();
+                newVaultModal.classList.add('hidden');
+                e.target.reset();
             }
-            vaultsData = vaultsData.filter(v => v.id !== id);
-            vaultHistoryData.unshift({
-                date: getCurrentDate(), action: 'Deleted', details: `Vault "${vault.name}" removed. Rs ${vault.current.toLocaleString('en-IN')} returned.`
-            });
-            renderVaults();
-        }
-        
-        confirmDeleteModal.classList.add('hidden');
-        renderAllHistory();
-        updateUI(); // This will re-render budgets and update card accounts
-        itemToDelete = { id: null, type: null };
-    });
+        });
 
-    accountSelector.addEventListener('change', (e) => {
-        if(e.target.name === 'activeAccount') {
-            activeAccountId = e.target.value;
-            updateUI();
-        }
-    });
-    
-    function toggleFreeze() { isCardFrozen = !isCardFrozen; updateUI(); }
-    freezeToggle.addEventListener('change', toggleFreeze);
-    
-    locateCardBtnSettings.addEventListener('click', () => mapModal.classList.remove('hidden'));
-    closeMapModalBtn.addEventListener('click', () => mapModal.classList.add('hidden'));
-    
-    mobileMenuButton.addEventListener('click', () => mobileSidebar.classList.remove('-translate-x-full'));
-    closeMobileMenuButton.addEventListener('click', () => mobileSidebar.classList.add('-translate-x-full'));
-    
-    newVaultForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = e.target.elements['vault-name'].value;
-        const target = parseFloat(e.target.elements['vault-target'].value);
-        if (name && target > 0) {
-            vaultsData.push({
-                id: name.toLowerCase().replace(/\s+/g, '-'),
-                name: name, current: 0, target: target, icon: 'package-plus', color: 'teal'
-            });
-            vaultHistoryData.unshift({
-                date: getCurrentDate(), action: 'Created', details: `${name} (Target: Rs ${target.toLocaleString('en-IN')})`
-            });
-            renderVaults();
-            renderDashboardItems();
-            renderAllHistory();
-            newVaultModal.classList.add('hidden');
-            e.target.reset();
-        }
-    });
+        newBudgetForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = e.target.elements['budget-name'].value;
+            const limit = parseFloat(e.target.elements['budget-limit'].value);
+            if (createBudget(name, limit)) {
+                updateUI();
+                newBudgetModal.classList.add('hidden');
+                e.target.reset();
+            }
+        });
 
-    newBudgetForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        if (budgetsData.length >= MAX_BUDGETS) return;
-        const name = e.target.elements['budget-name'].value;
-        const limit = parseFloat(e.target.elements['budget-limit'].value);
-        if (name && limit > 0) {
-            const newBudgetId = name.toLowerCase().replace(/\s+/g, '-');
-            budgetsData.unshift({
-                id: newBudgetId, name: name, spent: 0, limit: limit, icon: 'receipt', color: 'purple', isCardAssigned: false
-            });
-            budgetHistoryData.unshift({
-                date: getCurrentDate(), action: 'Created', details: `${name} Budget (Limit: Rs ${limit.toLocaleString('en-IN')})`
-            });
-            updateUI(); // Re-renders budgets, dashboard, etc.
-            renderAllHistory();
-            newBudgetModal.classList.add('hidden');
-            e.target.reset();
-        }
-    });
-
-    updateBudgetForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const budgetId = e.target.elements['update-budget-id'].value;
-        const newName = e.target.elements['update-budget-name'].value;
-        const newLimit = parseFloat(e.target.elements['update-budget-limit'].value);
-        
-        const budget = budgetsData.find(b => b.id === budgetId);
-
-        if(budget && newName && newLimit > 0) {
-            const oldLimit = budget.limit;
-            budget.name = newName;
-            budget.limit = newLimit;
+        updateBudgetForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const budgetId = e.target.elements['update-budget-id'].value;
+            const newName = e.target.elements['update-budget-name'].value;
+            const newLimit = parseFloat(e.target.elements['update-budget-limit'].value);
             
-            budgetHistoryData.unshift({
-                date: getCurrentDate(), action: 'Updated', details: `${newName} (Limit: Rs ${oldLimit.toLocaleString('en-IN')} -> Rs ${newLimit.toLocaleString('en-IN')})`
-            });
-            
-            updateUI();
-            renderAllHistory();
-            updateBudgetModal.classList.add('hidden');
-            e.target.reset();
-        }
-    });
-
-    vaultActionForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const vaultId = e.target.elements['vault-action-id'].value;
-        const actionType = e.target.elements['vault-action-type'].value;
-        const amount = parseFloat(e.target.elements['vault-action-amount'].value);
-
-        const vault = vaultsData.find(v => v.id === vaultId);
-        const currentAccount = accounts.find(a => a.id === 'current');
-
-        if (!vault || !currentAccount || !amount || amount <= 0) return;
-
-        if (actionType === 'deposit') {
-            if (currentAccount.balance >= amount) {
-                vault.current += amount;
-                currentAccount.balance -= amount;
-                 if (vault.isSavingsAccount) {
-                    savingsAccountHistoryData.unshift({ date: getCurrentDate(), action: 'Deposit', details: `Manual Deposit`, amount: amount });
-                } else {
-                    vaultHistoryData.unshift({ date: getCurrentDate(), action: 'Deposited', details: `Rs ${amount.toLocaleString('en-IN')} to ${vault.name}` });
-                }
-            } else {
-                alert('Insufficient funds in Current Account.');
-                return;
+            if(updateBudget(budgetId, newName, newLimit)) {
+                updateUI();
+                updateBudgetModal.classList.add('hidden');
+                e.target.reset();
             }
-        } else if (actionType === 'withdraw') {
-            if (vault.current >= amount) {
-                vault.current -= amount;
-                currentAccount.balance += amount;
-                if (vault.isSavingsAccount) {
-                    savingsAccountHistoryData.unshift({ date: getCurrentDate(), action: 'Withdrawal', details: `Manual Withdrawal`, amount: -amount });
-                } else {
-                    vaultHistoryData.unshift({ date: getCurrentDate(), action: 'Withdrew', details: `Rs ${amount.toLocaleString('en-IN')} from ${vault.name}` });
-                }
-            } else {
-                showToast('Insufficient funds in vault.');
-                return;
+        });
+
+        vaultActionForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const vaultId = e.target.elements['vault-action-id'].value;
+            const actionType = e.target.elements['vault-action-type'].value;
+            const amount = parseFloat(e.target.elements['vault-action-amount'].value);
+
+            if (handleVaultTransaction(vaultId, actionType, amount)) {
+                updateUI();
+                vaultActionModal.classList.add('hidden');
+                e.target.reset();
             }
-        }
+        });
         
-        renderVaults();
-        renderDashboardItems();
-        updateUI();
-        renderAllHistory();
-        vaultActionModal.classList.add('hidden');
-        e.target.reset();
-    });
-    
-    showSavingsHistoryBtn.addEventListener('click', () => {
-        savingsHistoryContainer.classList.toggle('hidden');
-        vaultHistoryContainer.classList.add('hidden');
-        budgetHistoryContainer.classList.add('hidden');
-    });
+        showSavingsHistoryBtn.addEventListener('click', () => {
+            savingsHistoryContainer.classList.toggle('hidden');
+            vaultHistoryContainer.classList.add('hidden');
+            budgetHistoryContainer.classList.add('hidden');
+        });
 
-    showVaultHistoryBtn.addEventListener('click', () => {
-        vaultHistoryContainer.classList.toggle('hidden');
-        savingsHistoryContainer.classList.add('hidden');
-        budgetHistoryContainer.classList.add('hidden');
-    });
+        showVaultHistoryBtn.addEventListener('click', () => {
+            vaultHistoryContainer.classList.toggle('hidden');
+            savingsHistoryContainer.classList.add('hidden');
+            budgetHistoryContainer.classList.add('hidden');
+        });
 
-    showBudgetHistoryBtn.addEventListener('click', () => {
-        budgetHistoryContainer.classList.toggle('hidden');
-        vaultHistoryContainer.classList.add('hidden');
-        savingsHistoryContainer.classList.add('hidden');
-    });
-    
-    simulatePayoutBtn.addEventListener('click', calculateAndApplyMonthlyReturns);
-    
-    exportSpendingBtn.addEventListener('click', () => exportToCsv('spending_history.csv', ['date', 'desc', 'cat', 'amount'], transactionsData));
-    exportSavingsHistoryBtn.addEventListener('click', () => exportToCsv('savings_account_history.csv', ['date', 'action', 'details', 'amount'], savingsAccountHistoryData));
-    exportVaultHistoryBtn.addEventListener('click', () => exportToCsv('vault_history.csv', ['date', 'action', 'details'], vaultHistoryData));
-    exportBudgetHistoryBtn.addEventListener('click', () => exportToCsv('budget_history.csv', ['date', 'action', 'details'], budgetHistoryData));
+        showBudgetHistoryBtn.addEventListener('click', () => {
+            budgetHistoryContainer.classList.toggle('hidden');
+            vaultHistoryContainer.classList.add('hidden');
+            savingsHistoryContainer.classList.add('hidden');
+        });
+        
+        simulatePayoutBtn.addEventListener('click', () => {
+            calculateAndApplyMonthlyReturns();
+            updateUI();
+        });
+        
+        exportSpendingBtn.addEventListener('click', () => exportToCsv('spending_history.csv', ['date', 'desc', 'cat', 'amount'], transactionsData));
+        exportSavingsHistoryBtn.addEventListener('click', () => exportToCsv('savings_account_history.csv', ['date', 'action', 'details', 'amount'], savingsAccountHistoryData));
+        exportVaultHistoryBtn.addEventListener('click', () => exportToCsv('vault_history.csv', ['date', 'action', 'details'], vaultHistoryData));
+        exportBudgetHistoryBtn.addEventListener('click', () => exportToCsv('budget_history.csv', ['date', 'action', 'details'], budgetHistoryData));
+        
+        themeSelector.addEventListener('click', (e) => {
+            const themeBtn = e.target.closest('.theme-btn');
+            if (themeBtn) {
+                const themeName = themeBtn.dataset.theme;
+                applyTheme(themeName);
+                saveTheme(themeName);
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.classList.toggle('border-white', btn.dataset.theme === themeName);
+                    btn.classList.toggle('border-transparent', btn.dataset.theme !== themeName);
+                });
+            }
+        });
+    }
+
 
     // --- INITIALIZATION ---
-    document.addEventListener('DOMContentLoaded', () => {
+    function init() {
+        lucide.createIcons();
         generateThemeSelector();
+        setupEventListeners();
         updateUI();
-        populateTransactions();
-        renderVaults();
-        renderAllHistory();
         showPage('dashboard');
-    });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+
+})(); // IIFE End
 </script>
 </body>
 </html>
