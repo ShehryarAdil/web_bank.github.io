@@ -6,7 +6,7 @@
     <title>FinVault - Your Financial Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
     <style>
         :root {
             --color-bg: #0f172a;
@@ -139,10 +139,19 @@
                  </button>
              </div>
              <h1 class="text-xl font-semibold" id="page-title">Dashboard</h1>
-             <div class="flex items-center space-x-4">
-                 <button class="p-2 rounded-full hover:bg-slate-700">
+             <div class="flex items-center space-x-4 relative">
+                 <button id="notifications-btn" class="p-2 rounded-full hover:bg-slate-700 relative">
                      <i data-lucide="bell" class="w-6 h-6"></i>
+                     <span id="notification-dot" class="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500"></span>
                  </button>
+                 <div id="notifications-dropdown" class="absolute top-full right-0 mt-2 w-80 bg-slate-700 rounded-lg shadow-lg hidden z-10">
+                    <div class="p-3 border-b border-slate-600">
+                        <h4 class="font-semibold">Notifications</h4>
+                    </div>
+                    <div id="notification-list" class="max-h-96 overflow-y-auto">
+                        <!-- Notifications will be populated by JS -->
+                    </div>
+                 </div>
              </div>
         </header>
 
@@ -177,7 +186,7 @@
 
                          <!-- Quick Actions -->
                         <div class="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
-                             <button class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
+                             <button id="add-money-btn" class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
                                 <i data-lucide="plus-circle" class="w-6 h-6"></i>
                                 <span>Add Money</span>
                              </button>
@@ -185,7 +194,7 @@
                                 <i data-lucide="shuffle" class="w-6 h-6"></i>
                                 <span>Rotate Card</span>
                              </button>
-                             <button class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
+                             <button id="send-money-btn" class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
                                 <i data-lucide="send" class="w-6 h-6"></i>
                                 <span>Send</span>
                              </button>
@@ -194,16 +203,19 @@
 
                     <!-- AI Financial Advisor -->
                     <div class="bg-slate-900/50 p-6 rounded-2xl flex flex-col">
-                        <h3 class="text-lg font-semibold mb-4">AI Financial Advisor</h3>
+                        <div class="flex justify-between items-center mb-4">
+                             <h3 class="text-lg font-semibold">AI Financial Advisor</h3>
+                             <button id="new-advice-btn" class="p-1 rounded-full hover:bg-slate-700"><i data-lucide="refresh-cw" class="w-4 h-4 text-slate-400"></i></button>
+                        </div>
                         <div class="flex items-start space-x-4">
                             <div class="p-2 rounded-full" style="background-color: var(--color-primary); opacity: 0.2;">
                                 <i data-lucide="brain-circuit" class="w-6 h-6" style="color: var(--color-primary);"></i>
                             </div>
-                            <div class="flex-1 bg-slate-700 p-4 rounded-lg">
-                                <p class="text-sm">You've spent 15% less on food this month. Great job! Consider moving the Rs 3,500 savings to your 'Vacation' vault to reach your goal faster.</p>
+                            <div id="ai-advice-content" class="flex-1 bg-slate-700 p-4 rounded-lg">
+                                <!-- AI Advice populated by JS -->
                             </div>
                         </div>
-                         <button class="btn-primary mt-auto py-2 px-4 rounded-lg w-full">Move Savings</button>
+                         <button id="ai-action-btn" class="btn-primary mt-auto py-2 px-4 rounded-lg w-full">Move Savings</button>
                     </div>
                 </div>
 
@@ -535,6 +547,57 @@
         </div>
     </div>
     
+    <div id="add-money-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
+            <h3 class="text-xl font-semibold mb-4">Add Money to Current Account</h3>
+            <form id="add-money-form" class="space-y-4">
+                <div>
+                    <label for="add-money-amount" class="block text-sm font-medium text-slate-300 mb-1">Amount</label>
+                    <input type="number" id="add-money-amount" name="add-money-amount" class="w-full bg-slate-700 border-slate-600 rounded-md p-2" placeholder="e.g., 10000" required>
+                </div>
+                <div>
+                    <label for="add-money-source" class="block text-sm font-medium text-slate-300 mb-1">Source</label>
+                    <select id="add-money-source" name="add-money-source" class="w-full bg-slate-700 border-slate-600 rounded-md p-2">
+                        <option>Linked Bank Account (**** 1234)</option>
+                        <option>Debit Card (**** 5678)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-4 pt-4">
+                    <button type="button" class="btn-secondary py-2 px-4 rounded-lg" data-action="close">Cancel</button>
+                    <button type="submit" class="btn-primary py-2 px-4 rounded-lg">Add Money</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="send-money-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
+            <h3 class="text-xl font-semibold mb-4">Send Money</h3>
+            <form id="send-money-form" class="space-y-4">
+                 <div>
+                    <label for="send-money-recipient" class="block text-sm font-medium text-slate-300 mb-1">Recipient Account/IBAN</label>
+                    <input type="text" id="send-money-recipient" name="send-money-recipient" class="w-full bg-slate-700 border-slate-600 rounded-md p-2" placeholder="e.g., PK36SCBL0000001123456789" required>
+                </div>
+                <div>
+                    <label for="send-money-amount" class="block text-sm font-medium text-slate-300 mb-1">Amount</label>
+                    <input type="number" id="send-money-amount" name="send-money-amount" class="w-full bg-slate-700 border-slate-600 rounded-md p-2" placeholder="e.g., 2500" required>
+                </div>
+                <div>
+                    <label for="send-money-service" class="block text-sm font-medium text-slate-300 mb-1">Service</label>
+                    <select id="send-money-service" name="send-money-service" class="w-full bg-slate-700 border-slate-600 rounded-md p-2">
+                        <option>Bank Transfer</option>
+                        <option>JazzCash</option>
+                        <option>Easypaisa</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-4 pt-4">
+                    <button type="button" class="btn-secondary py-2 px-4 rounded-lg" data-action="close">Cancel</button>
+                    <button type="submit" class="btn-primary py-2 px-4 rounded-lg">Send Money</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="new-vault-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
         <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
             <h3 class="text-xl font-semibold mb-4">Create New Vault</h3>
@@ -673,7 +736,7 @@
         { date: 'Sep 1, 2025', action: 'Archived', details: 'August Shopping Budget'},
     ];
     
-    const transactionsData = [
+    let transactionsData = [
         { date: 'Sep 1, 2025', desc: 'Netflix Subscription', cat: 'Entertainment', amount: -1200.00 },
         { date: 'Sep 1, 2025', desc: 'Foodpanda Order', cat: 'Food', amount: -2550.00 },
         { date: 'Aug 31, 2025', desc: 'Daraz Online Shopping', cat: 'Shopping', amount: -5400.00 },
@@ -681,6 +744,21 @@
         { date: 'Aug 29, 2025', desc: 'Careem Ride', cat: 'Transport', amount: -850.00 },
     ];
 
+    const aiAdvicePool = [
+        { text: "You've spent 15% less on food this month. Great job! Consider moving the Rs 3,500 savings to your 'Vacation' vault to reach your goal faster.", action: 'move', amount: 3500, targetVault: 'vacation' },
+        { text: "Your 'Shopping' budget is 52% utilized. Keep an eye on non-essential spending for the rest of the month.", action: 'none' },
+        { text: "You've saved Rs 85,000 in your 'Emergency Fund'. You're 85% of the way to your goal!", action: 'none' },
+        { text: "Your transport spending is higher than last month. Could you try public transport twice a week to save around Rs 1,500?", action: 'none' },
+        { text: "You have Rs 7,660 remaining in your 'Food' budget. That's enough for a nice dinner out!", action: 'none' }
+    ];
+
+    const notificationsData = [
+        { text: "Your 'Food' budget is 85% used.", time: "1h ago", icon: "pie-chart" },
+        { text: "Monthly interest has been paid to your Savings Account.", time: "3h ago", icon: "piggy-bank" },
+        { text: "Transaction of Rs 2,550 to Foodpanda was successful.", time: "1d ago", icon: "receipt" }
+    ];
+    
+    let currentAdviceIndex = 0;
     let activeAccountId = 'current';
     let isCardFrozen = false;
     let itemToDelete = { id: null, type: null };
@@ -708,6 +786,8 @@
     
     // Modal elements
     const mapModal = document.getElementById('map-modal');
+    const addMoneyModal = document.getElementById('add-money-modal');
+    const sendMoneyModal = document.getElementById('send-money-modal');
     const locateCardBtnSettings = document.getElementById('locate-card-btn-settings');
     const closeMapModalBtn = document.getElementById('close-map-modal');
     const newVaultModal = document.getElementById('new-vault-modal');
@@ -717,6 +797,8 @@
     const confirmDeleteModal = document.getElementById('confirm-delete-modal');
 
     // Modal Forms & Buttons
+    const addMoneyForm = document.getElementById('add-money-form');
+    const sendMoneyForm = document.getElementById('send-money-form');
     const newVaultForm = document.getElementById('new-vault-form');
     const newBudgetForm = document.getElementById('new-budget-form');
     const updateBudgetForm = document.getElementById('update-budget-form');
@@ -747,6 +829,15 @@
     // Toast Notification
     const toastNotification = document.getElementById('toast-notification');
     const toastMessage = document.getElementById('toast-message');
+
+    // AI Advisor elements
+    const aiAdviceContent = document.getElementById('ai-advice-content');
+    const aiActionButton = document.getElementById('ai-action-btn');
+
+    // Notifications
+    const notificationsBtn = document.getElementById('notifications-btn');
+    const notificationsDropdown = document.getElementById('notifications-dropdown');
+    const notificationList = document.getElementById('notification-list');
 
     // --- THEME CUSTOMIZATION ---
     const themes = {
@@ -941,6 +1032,7 @@
     
     function generateThemeSelector() {
         const currentTheme = loadTheme();
+        if (!themeSelector) return;
         themeSelector.innerHTML = '';
         for (const themeName in themes) {
             const theme = themes[themeName];
@@ -958,6 +1050,7 @@
     
     function applyTheme(themeName) {
         const theme = themes[themeName];
+        if (!theme) return;
         for (const [key, value] of Object.entries(theme)) {
             document.documentElement.style.setProperty(key, value);
         }
@@ -974,31 +1067,35 @@
     }
 
     function updateUI() {
-        rebuildCardAccounts();
-        
-        // Fallback for active card account
-        const activeAccount = accounts.find(acc => acc.id === activeAccountId);
-        if (!activeAccount) activeAccountId = 'current';
-        
-        const currentActiveAccount = accounts.find(acc => acc.id === activeAccountId);
-        activeAccountName.textContent = currentActiveAccount.name;
-        activeAccountNameControl.textContent = currentActiveAccount.name;
-        
-        cardBalance.textContent = `Rs ${accounts.find(a => a.id === 'current').balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        cardFrozenOverlay.classList.toggle('hidden', !isCardFrozen);
-        cardFrozenOverlayControl.classList.toggle('hidden', !isCardFrozen);
-        freezeToggle.checked = isCardFrozen;
-        [cardDisplay, cardDisplayControl].forEach(el => el.classList.toggle('grayscale', isCardFrozen));
+        try {
+            rebuildCardAccounts();
+            
+            const activeAccount = accounts.find(acc => acc.id === activeAccountId);
+            if (!activeAccount) activeAccountId = 'current';
+            
+            const currentActiveAccount = accounts.find(acc => acc.id === activeAccountId);
+            if(activeAccountName) activeAccountName.textContent = currentActiveAccount.name;
+            if(activeAccountNameControl) activeAccountNameControl.textContent = currentActiveAccount.name;
+            
+            if(cardBalance) cardBalance.textContent = `Rs ${accounts.find(a => a.id === 'current').balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            if(cardFrozenOverlay) cardFrozenOverlay.classList.toggle('hidden', !isCardFrozen);
+            if(cardFrozenOverlayControl) cardFrozenOverlayControl.classList.toggle('hidden', !isCardFrozen);
+            if(freezeToggle) freezeToggle.checked = isCardFrozen;
+            [cardDisplay, cardDisplayControl].forEach(el => { if(el) el.classList.toggle('grayscale', isCardFrozen) });
 
-        // Render page-specific components
-        populateAccountSelector();
-        renderDashboardItems();
-        renderBudgets();
-        renderVaults();
-        renderAllHistory();
-        populateTransactions();
+            populateAccountSelector();
+            renderDashboardItems();
+            renderBudgets();
+            renderVaults();
+            renderAllHistory();
+            populateTransactions();
+            renderNotifications();
+            displayAIAdvice();
 
-        lucide.createIcons();
+            lucide.createIcons();
+        } catch (error) {
+            console.error("Failed to update UI:", error);
+        }
     }
 
     function rebuildCardAccounts() {
@@ -1011,6 +1108,7 @@
     }
 
     function populateAccountSelector() {
+        if (!accountSelector) return;
         accountSelector.innerHTML = '';
         accounts.forEach(account => {
             const isChecked = account.id === activeAccountId;
@@ -1028,6 +1126,7 @@
     }
     
     function populateTransactions() {
+        if (!transactionList) return;
         transactionList.innerHTML = '';
         transactionsData.forEach(tx => {
             const amountClass = tx.amount > 0 ? 'text-green-400' : 'text-slate-300';
@@ -1045,6 +1144,9 @@
     
     function renderDashboardItems() {
         const dashboardBudgets = document.getElementById('dashboard-budgets');
+        const dashboardVaults = document.getElementById('dashboard-vaults');
+        if (!dashboardBudgets || !dashboardVaults) return;
+        
         dashboardBudgets.innerHTML = '';
         budgetsData.slice(0, 3).forEach(budget => {
             const percentage = budget.limit > 0 ? Math.round((budget.spent / budget.limit) * 100) : 0;
@@ -1067,7 +1169,6 @@
             `);
         });
 
-        const dashboardVaults = document.getElementById('dashboard-vaults');
         dashboardVaults.innerHTML = '';
         let totalSaved = 0;
         vaultsData.forEach(vault => {
@@ -1097,22 +1198,26 @@
     }
     
     function renderBudgetTotals() {
+        const totalBudgetedEl = document.getElementById('total-budgeted');
+        if (!totalBudgetedEl) return;
+        
         const totalBudgeted = budgetsData.reduce((sum, b) => sum + b.limit, 0);
         const totalSpent = budgetsData.reduce((sum, b) => sum + b.spent, 0);
         const totalRemaining = totalBudgeted - totalSpent;
         
-        document.getElementById('total-budgeted').textContent = `Rs ${totalBudgeted.toLocaleString('en-IN')}`;
+        totalBudgetedEl.textContent = `Rs ${totalBudgeted.toLocaleString('en-IN')}`;
         document.getElementById('total-spent').textContent = `Rs ${totalSpent.toLocaleString('en-IN')}`;
         document.getElementById('total-remaining').textContent = `Rs ${totalRemaining.toLocaleString('en-IN')}`;
     }
 
     function renderBudgets() {
         const container = document.getElementById('budgets-list');
+        if (!container) return;
+        
         container.innerHTML = '';
         const assignedCount = budgetsData.filter(b => b.isCardAssigned).length;
         const canAssignMore = assignedCount < MAX_CARD_ASSIGNMENTS;
         const baseButtonClasses = "card-assign-btn text-xs py-1 px-2 rounded";
-
 
         budgetsData.forEach((budget, index) => {
             const percentage = budget.limit > 0 ? Math.round((budget.spent / budget.limit) * 100) : 0;
@@ -1156,6 +1261,8 @@
 
         const newBudgetBtn = document.getElementById('new-budget-btn');
         const budgetCountText = document.getElementById('budget-count-text');
+        if (!newBudgetBtn || !budgetCountText) return;
+
         if (budgetsData.length >= MAX_BUDGETS) {
             newBudgetBtn.classList.add('btn-disabled');
             newBudgetBtn.disabled = true;
@@ -1172,6 +1279,8 @@
     function renderVaults() {
         const savingsContainer = document.getElementById('savings-account-container');
         const goalsContainer = document.getElementById('vaults-list');
+        if (!savingsContainer || !goalsContainer) return;
+        
         savingsContainer.innerHTML = '';
         goalsContainer.innerHTML = '';
         
@@ -1232,6 +1341,10 @@
     
     function renderAllHistory() {
         const savingsHistoryList = document.getElementById('savings-history-list');
+        const vaultHistoryList = document.getElementById('vault-history-list');
+        const budgetHistoryList = document.getElementById('budget-history-list');
+        if (!savingsHistoryList || !vaultHistoryList || !budgetHistoryList) return;
+        
         savingsHistoryList.innerHTML = '';
         savingsAccountHistoryData.forEach(item => {
             const amountClass = item.amount > 0 ? 'text-green-400' : 'text-red-400';
@@ -1246,7 +1359,6 @@
             `);
         });
 
-        const vaultHistoryList = document.getElementById('vault-history-list');
         vaultHistoryList.innerHTML = '';
         vaultHistoryData.forEach(item => {
             vaultHistoryList.insertAdjacentHTML('beforeend', `
@@ -1258,7 +1370,6 @@
             `);
         });
         
-        const budgetHistoryList = document.getElementById('budget-history-list');
         budgetHistoryList.innerHTML = '';
         budgetHistoryData.forEach(item => {
             budgetHistoryList.insertAdjacentHTML('beforeend', `
@@ -1267,6 +1378,37 @@
                     <td class="p-3 font-medium">${item.action}</td>
                     <td class="p-3">${item.details}</td>
                 </tr>
+            `);
+        });
+    }
+
+    function displayAIAdvice() {
+        const advice = aiAdvicePool[currentAdviceIndex];
+        if (!aiAdviceContent) return;
+
+        aiAdviceContent.innerHTML = `<p class="text-sm">${advice.text}</p>`;
+        if (advice.action === 'move') {
+            aiActionButton.textContent = `Move Savings`;
+            aiActionButton.classList.remove('hidden');
+        } else {
+            aiActionButton.classList.add('hidden');
+        }
+    }
+
+    function renderNotifications() {
+        if (!notificationList) return;
+        notificationList.innerHTML = '';
+        notificationsData.forEach(notif => {
+            notificationList.insertAdjacentHTML('beforeend', `
+                <div class="p-3 border-b border-slate-600 hover:bg-slate-600/50 flex items-start space-x-3">
+                    <div class="p-1.5 bg-blue-500/20 rounded-full mt-1">
+                        <i data-lucide="${notif.icon}" class="w-4 h-4 text-blue-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm">${notif.text}</p>
+                        <p class="text-xs text-slate-400">${notif.time}</p>
+                    </div>
+                </div>
             `);
         });
     }
@@ -1280,6 +1422,26 @@
             if (navLink) {
                 e.preventDefault();
                 showPage(navLink.dataset.target);
+            }
+
+            // Quick Actions
+            if (e.target.closest('#add-money-btn')) addMoneyModal.classList.remove('hidden');
+            if (e.target.closest('#send-money-btn')) sendMoneyModal.classList.remove('hidden');
+            
+            // AI Advisor
+            if(e.target.closest('#new-advice-btn')) {
+                currentAdviceIndex = (currentAdviceIndex + 1) % aiAdvicePool.length;
+                displayAIAdvice();
+            }
+            if(e.target.closest('#ai-action-btn')) {
+                const advice = aiAdvicePool[currentAdviceIndex];
+                if (advice.action === 'move') {
+                    const success = handleVaultTransaction(advice.targetVault, 'deposit', advice.amount);
+                    if (success) {
+                        showToast(`Successfully moved Rs ${advice.amount.toLocaleString('en-IN')} to ${advice.targetVault} vault.`);
+                        updateUI();
+                    }
+                }
             }
 
             // New Item Buttons
@@ -1360,6 +1522,13 @@
                     updateUI();
                 }
             }
+
+            // Notifications
+            if (e.target.closest('#notifications-btn')) {
+                notificationsDropdown.classList.toggle('hidden');
+            } else if (!e.target.closest('#notifications-dropdown')) {
+                notificationsDropdown.classList.add('hidden');
+            }
         });
 
         confirmDeleteBtn.addEventListener('click', () => {
@@ -1390,6 +1559,41 @@
         mobileMenuButton.addEventListener('click', () => mobileSidebar.classList.remove('-translate-x-full'));
         closeMobileMenuButton.addEventListener('click', () => mobileSidebar.classList.add('-translate-x-full'));
         
+        addMoneyForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const amount = parseFloat(e.target.elements['add-money-amount'].value);
+            if (amount > 0) {
+                accounts.find(a => a.id === 'current').balance += amount;
+                transactionsData.unshift({
+                    date: getCurrentDate(), desc: 'Deposit from external source', cat: 'Income', amount: amount
+                });
+                showToast(`Rs ${amount.toLocaleString('en-IN')} added successfully.`);
+                updateUI();
+                addMoneyModal.classList.add('hidden');
+                e.target.reset();
+            }
+        });
+        
+        sendMoneyForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const amount = parseFloat(e.target.elements['send-money-amount'].value);
+            const recipient = e.target.elements['send-money-recipient'].value;
+            const currentAccount = accounts.find(a => a.id === 'current');
+            
+            if (amount > 0 && recipient && currentAccount.balance >= amount) {
+                currentAccount.balance -= amount;
+                transactionsData.unshift({
+                    date: getCurrentDate(), desc: `Sent to ${recipient}`, cat: 'Transfer', amount: -amount
+                });
+                showToast(`Rs ${amount.toLocaleString('en-IN')} sent successfully.`);
+                updateUI();
+                sendMoneyModal.classList.add('hidden');
+                e.target.reset();
+            } else if (currentAccount.balance < amount) {
+                showToast('Insufficient funds.');
+            }
+        });
+
         newVaultForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const name = e.target.elements['vault-name'].value;
@@ -1483,7 +1687,9 @@
 
     // --- INITIALIZATION ---
     function init() {
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
         generateThemeSelector();
         setupEventListeners();
         updateUI();
