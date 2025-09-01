@@ -6,7 +6,7 @@
     <title>FinVault - Your Financial Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
     <style>
         :root {
             --color-bg: #0f172a;
@@ -176,7 +176,7 @@
                         </div>
 
                          <!-- Quick Actions -->
-                        <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div class="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
                              <button class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
                                 <i data-lucide="plus-circle" class="w-6 h-6"></i>
                                 <span>Add Money</span>
@@ -184,10 +184,6 @@
                               <button class="nav-link btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2" data-target="card-control">
                                 <i data-lucide="shuffle" class="w-6 h-6"></i>
                                 <span>Rotate Card</span>
-                             </button>
-                             <button id="freeze-card-btn-quick" class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
-                                <i data-lucide="snowflake" class="w-6 h-6"></i>
-                                <span>Freeze Card</span>
                              </button>
                              <button class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
                                 <i data-lucide="send" class="w-6 h-6"></i>
@@ -265,10 +261,6 @@
                                 <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                             </label>
                         </div>
-                        <button id="locate-card-btn" class="mt-4 w-full btn-secondary p-3 rounded-lg flex items-center justify-center">
-                            <i data-lucide="map-pin" class="w-5 h-5 mr-2"></i>
-                            Locate Card
-                        </button>
                     </div>
 
                     <div class="bg-slate-900/50 p-6 rounded-2xl">
@@ -325,6 +317,12 @@
                         <h2 class="text-2xl font-semibold">Savings Vaults</h2>
                         <p class="text-sm text-slate-400 mt-1">Total Saved: <span id="total-saved-vaults-page" class="font-bold text-base"></span></p>
                     </div>
+                 </div>
+                 <div id="savings-account-container" class="mb-8">
+                    <!-- Savings Account Rendered here -->
+                 </div>
+                 <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Goal Vaults</h3>
                     <button id="new-vault-btn" class="btn-primary py-2 px-4 rounded-lg flex items-center">
                         <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
                         New Vault
@@ -365,10 +363,14 @@
                 <div>
                     <h2 class="text-2xl font-semibold mb-6">Other History</h2>
                      <div class="bg-slate-900/50 p-6 rounded-2xl">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                             <button id="show-savings-history-btn" class="w-full btn-secondary p-3 rounded-lg flex items-center justify-center">
+                                <i data-lucide="piggy-bank" class="w-5 h-5 mr-2"></i>
+                                View Savings History
+                            </button>
                             <button id="show-vault-history-btn" class="w-full btn-secondary p-3 rounded-lg flex items-center justify-center">
                                 <i data-lucide="shield-check" class="w-5 h-5 mr-2"></i>
-                                View Vault History
+                                View Goal Vault History
                             </button>
                             <button id="show-budget-history-btn" class="w-full btn-secondary p-3 rounded-lg flex items-center justify-center">
                                 <i data-lucide="pie-chart" class="w-5 h-5 mr-2"></i>
@@ -378,9 +380,34 @@
                     </div>
                 </div>
 
+                <div id="savings-history-container" class="hidden">
+                    <div class="flex justify-between items-center mb-6">
+                         <h2 class="text-2xl font-semibold">Savings Account History</h2>
+                         <button id="export-savings-history-btn" class="btn-secondary py-2 px-4 rounded-lg flex items-center">
+                            <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2"></i>
+                            Export
+                        </button>
+                    </div>
+                     <div class="bg-slate-900/50 p-6 rounded-2xl">
+                        <table class="w-full text-left">
+                           <thead class="border-b" style="border-color: var(--color-border);">
+                               <tr>
+                                   <th class="p-3 font-semibold">Date</th>
+                                   <th class="p-3 font-semibold">Action</th>
+                                   <th class="p-3 font-semibold">Details</th>
+                                   <th class="p-3 font-semibold text-right">Amount</th>
+                               </tr>
+                           </thead>
+                           <tbody id="savings-history-list">
+                               <!-- Populated by JS -->
+                           </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div id="vault-history-container" class="hidden">
                     <div class="flex justify-between items-center mb-6">
-                         <h2 class="text-2xl font-semibold">Vault History</h2>
+                         <h2 class="text-2xl font-semibold">Goal Vault History</h2>
                          <button id="export-vault-history-btn" class="btn-secondary py-2 px-4 rounded-lg flex items-center">
                             <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2"></i>
                             Export
@@ -437,6 +464,23 @@
                         <div id="theme-selector" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             <!-- Theme options will be generated by JS -->
                         </div>
+                    </div>
+                </div>
+                 <div>
+                    <div class="bg-slate-900/50 p-6 rounded-2xl">
+                        <h3 class="text-lg font-semibold mb-4">Card Security</h3>
+                        <p class="text-sm text-slate-400 mb-6">Find your card's last known location.</p>
+                        <button id="locate-card-btn-settings" class="btn-secondary py-2 px-4 rounded-lg flex items-center">
+                            <i data-lucide="map-pin" class="w-5 h-5 mr-2"></i>
+                            Locate My Card
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <div class="bg-slate-900/50 p-6 rounded-2xl">
+                        <h3 class="text-lg font-semibold mb-4">Simulation Controls</h3>
+                        <p class="text-sm text-slate-400 mb-6">Advance time to see features like monthly returns.</p>
+                        <button id="simulate-payout-btn" class="btn-primary py-2 px-4 rounded-lg">Simulate Monthly Payout</button>
                     </div>
                 </div>
             </section>
@@ -582,9 +626,14 @@
         </div>
     </div>
 
+    <div id="toast-notification" class="fixed bottom-8 right-8 bg-green-600 text-white py-3 px-6 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 ease-in-out z-50">
+        <p id="toast-message"></p>
+    </div>
+
 
 <script>
-    lucide.createIcons();
+(function() { // IIFE Start
+    "use strict";
 
     // --- MOCK DATA & CONFIG ---
     const MAX_BUDGETS = 5;
@@ -602,11 +651,16 @@
     ];
 
     let vaultsData = [
+        { id: 'savings-account', name: 'Savings Account', current: 500000, target: null, icon: 'piggy-bank', color: 'green', isSavingsAccount: true, returnRate: 0.10 },
         { id: 'emergency', name: 'Emergency Fund', current: 85000, target: 100000, icon: 'shield', color: 'indigo' },
         { id: 'laptop', name: 'New Laptop', current: 60000, target: 150000, icon: 'briefcase', color: 'cyan' },
         { id: 'vacation', name: 'Vacation Trip', current: 130000, target: 200000, icon: 'plane', color: 'fuchsia' },
     ];
     
+    let savingsAccountHistoryData = [
+        { date: 'Aug 1, 2025', action: 'Deposit', details: 'Initial Deposit', amount: 500000 },
+    ];
+
     let vaultHistoryData = [
         { date: 'Aug 20, 2025', action: 'Created', details: 'Emergency Fund (Target: Rs 100,000)'},
         { date: 'Aug 25, 2025', action: 'Created', details: 'New Laptop (Target: Rs 150,000)'},
@@ -651,11 +705,10 @@
     const cardFrozenOverlayControl = document.getElementById('card-frozen-overlay-control');
     const freezeToggle = document.getElementById('freeze-toggle');
     const accountSelector = document.getElementById('account-selector');
-    const freezeBtnQuick = document.getElementById('freeze-card-btn-quick');
-
+    
     // Modal elements
     const mapModal = document.getElementById('map-modal');
-    const locateCardBtn = document.getElementById('locate-card-btn');
+    const locateCardBtnSettings = document.getElementById('locate-card-btn-settings');
     const closeMapModalBtn = document.getElementById('close-map-modal');
     const newVaultModal = document.getElementById('new-vault-modal');
     const newBudgetModal = document.getElementById('new-budget-modal');
@@ -673,6 +726,7 @@
     // Transactions & Export
     const transactionList = document.getElementById('transaction-list');
     const exportSpendingBtn = document.getElementById('export-spending-btn');
+    const exportSavingsHistoryBtn = document.getElementById('export-savings-history-btn');
     const exportVaultHistoryBtn = document.getElementById('export-vault-history-btn');
     const exportBudgetHistoryBtn = document.getElementById('export-budget-history-btn');
     
@@ -680,10 +734,19 @@
     const themeSelector = document.getElementById('theme-selector');
     
     // History elements
+    const showSavingsHistoryBtn = document.getElementById('show-savings-history-btn');
     const showVaultHistoryBtn = document.getElementById('show-vault-history-btn');
     const showBudgetHistoryBtn = document.getElementById('show-budget-history-btn');
+    const savingsHistoryContainer = document.getElementById('savings-history-container');
     const vaultHistoryContainer = document.getElementById('vault-history-container');
     const budgetHistoryContainer = document.getElementById('budget-history-container');
+
+    // Simulation
+    const simulatePayoutBtn = document.getElementById('simulate-payout-btn');
+    
+    // Toast Notification
+    const toastNotification = document.getElementById('toast-notification');
+    const toastMessage = document.getElementById('toast-message');
 
     // --- THEME CUSTOMIZATION ---
     const themes = {
@@ -713,8 +776,190 @@
         }
     };
 
+    // --- DATA MANIPULATION (BUSINESS LOGIC) ---
+
+    function createBudget(name, limit) {
+        if (budgetsData.length >= MAX_BUDGETS || !name || limit <= 0) return false;
+        
+        const newBudgetId = name.toLowerCase().replace(/\s+/g, '-') + Date.now();
+        budgetsData.unshift({
+            id: newBudgetId, name: name, spent: 0, limit: limit, icon: 'receipt', color: 'purple', isCardAssigned: false
+        });
+        budgetHistoryData.unshift({
+            date: getCurrentDate(), action: 'Created', details: `${name} Budget (Limit: Rs ${limit.toLocaleString('en-IN')})`
+        });
+        return true;
+    }
+
+    function updateBudget(id, newName, newLimit) {
+        const budget = budgetsData.find(b => b.id === id);
+        if(!budget || !newName || newLimit <= 0) return false;
+
+        const oldLimit = budget.limit;
+        budget.name = newName;
+        budget.limit = newLimit;
+        
+        budgetHistoryData.unshift({
+            date: getCurrentDate(), action: 'Updated', details: `${newName} (Limit: Rs ${oldLimit.toLocaleString('en-IN')} -> Rs ${newLimit.toLocaleString('en-IN')})`
+        });
+        return true;
+    }
+
+    function deleteBudget(id) {
+        const budgetIndex = budgetsData.findIndex(b => b.id === id);
+        if (budgetIndex === -1) return;
+        
+        budgetsData.splice(budgetIndex, 1);
+        budgetHistoryData.unshift({
+            date: getCurrentDate(), action: 'Deleted', details: `Budget item removed.`
+        });
+    }
+
+    function createVault(name, target) {
+        if (!name || target <= 0) return false;
+
+        vaultsData.push({
+            id: name.toLowerCase().replace(/\s+/g, '-') + Date.now(),
+            name: name, current: 0, target: target, icon: 'package-plus', color: 'teal'
+        });
+        vaultHistoryData.unshift({
+            date: getCurrentDate(), action: 'Created', details: `${name} (Target: Rs ${target.toLocaleString('en-IN')})`
+        });
+        return true;
+    }
+
+    function deleteVault(id) {
+        const vaultIndex = vaultsData.findIndex(v => v.id === id);
+        if (vaultIndex === -1) return;
+        
+        const vault = vaultsData[vaultIndex];
+        if (vault.current > 0) {
+            accounts.find(a => a.id === 'current').balance += vault.current;
+        }
+        
+        vaultsData.splice(vaultIndex, 1);
+        vaultHistoryData.unshift({
+            date: getCurrentDate(), action: 'Deleted', details: `Vault "${vault.name}" removed. Rs ${vault.current.toLocaleString('en-IN')} returned.`
+        });
+    }
+
+    function handleVaultTransaction(vaultId, actionType, amount) {
+        const vault = vaultsData.find(v => v.id === vaultId);
+        const currentAccount = accounts.find(a => a.id === 'current');
+
+        if (!vault || !currentAccount || !amount || amount <= 0) return false;
+
+        if (actionType === 'deposit') {
+            if (currentAccount.balance >= amount) {
+                vault.current += amount;
+                currentAccount.balance -= amount;
+                 if (vault.isSavingsAccount) {
+                    savingsAccountHistoryData.unshift({ date: getCurrentDate(), action: 'Deposit', details: `Manual Deposit`, amount: amount });
+                } else {
+                    vaultHistoryData.unshift({ date: getCurrentDate(), action: 'Deposited', details: `Rs ${amount.toLocaleString('en-IN')} to ${vault.name}` });
+                }
+                return true;
+            } else {
+                showToast('Insufficient funds in Current Account.');
+                return false;
+            }
+        } else if (actionType === 'withdraw') {
+            if (vault.current >= amount) {
+                vault.current -= amount;
+                currentAccount.balance += amount;
+                if (vault.isSavingsAccount) {
+                    savingsAccountHistoryData.unshift({ date: getCurrentDate(), action: 'Withdrawal', details: `Manual Withdrawal`, amount: -amount });
+                } else {
+                    vaultHistoryData.unshift({ date: getCurrentDate(), action: 'Withdrew', details: `Rs ${amount.toLocaleString('en-IN')} from ${vault.name}` });
+                }
+                return true;
+            } else {
+                showToast('Insufficient funds in vault.');
+                return false;
+            }
+        }
+    }
+
+    function calculateAndApplyMonthlyReturns() {
+        const savingsAccount = vaultsData.find(v => v.isSavingsAccount);
+        if (savingsAccount) {
+            const monthlyReturnRate = savingsAccount.returnRate / 12;
+            const profit = savingsAccount.current * monthlyReturnRate;
+            savingsAccount.current += profit;
+
+            savingsAccountHistoryData.unshift({
+                date: getCurrentDate(), action: 'Profit Payout', details: `Monthly interest credited`, amount: profit
+            });
+            
+            showToast(`Profit of Rs ${profit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has been added.`);
+        }
+    }
+
+
+    // --- UI RENDERING & HELPERS ---
+    
+    function getCurrentDate() {
+        return new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    
+    function showToast(message) {
+        toastMessage.textContent = message;
+        toastNotification.classList.remove('translate-y-20', 'opacity-0');
+        setTimeout(() => {
+            toastNotification.classList.add('translate-y-20', 'opacity-0');
+        }, 3000); // Hide after 3 seconds
+    }
+
+    function exportToCsv(filename, headers, data) {
+        const rows = data.map(item =>
+            headers.map(header => {
+                let val = item[header.toLowerCase()];
+                if (typeof val === 'number') val = val.toLocaleString('en-IN');
+                return `"${(val || '').toString().replace(/"/g, '""')}"`;
+            }).join(',')
+        );
+        const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n" + rows.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function showPage(targetId) {
+        pageSections.forEach(section => section.classList.toggle('hidden', section.id !== targetId));
+        const targetLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
+        if (targetLink) pageTitle.textContent = targetLink.querySelector('span').textContent;
+        navLinks.forEach(link => {
+            link.classList.remove('bg-slate-700');
+            if (link.dataset.target === targetId) link.classList.add('bg-slate-700');
+        });
+        mobileSidebar.classList.add('-translate-x-full');
+    }
+    
+    function generateThemeSelector() {
+        const currentTheme = loadTheme();
+        if (!themeSelector) return;
+        themeSelector.innerHTML = '';
+        for (const themeName in themes) {
+            const theme = themes[themeName];
+            const isActive = themeName === currentTheme;
+            const button = document.createElement('button');
+            button.className = `theme-btn p-4 rounded-lg border-2 ${isActive ? 'border-white' : 'border-transparent'} transition-all`;
+            button.dataset.theme = themeName;
+            button.innerHTML = `
+                <div class="h-12 w-full rounded-md mb-2" style="background: linear-gradient(135deg, ${theme['--color-card-gradient-from']}, ${theme['--color-card-gradient-to']})"></div>
+                <p class="font-medium">${themeName}</p>
+            `;
+            themeSelector.appendChild(button);
+        }
+    }
+    
     function applyTheme(themeName) {
         const theme = themes[themeName];
+        if (!theme) return;
         for (const [key, value] of Object.entries(theme)) {
             document.documentElement.style.setProperty(key, value);
         }
@@ -730,111 +975,47 @@
         return savedTheme;
     }
 
-    function generateThemeSelector() {
-        const currentTheme = loadTheme();
-        themeSelector.innerHTML = '';
-        for (const themeName in themes) {
-            const theme = themes[themeName];
-            const isActive = themeName === currentTheme;
-            const button = document.createElement('button');
-            button.className = `theme-btn p-4 rounded-lg border-2 ${isActive ? 'border-white' : 'border-transparent'} transition-all`;
-            button.dataset.theme = themeName;
-            button.innerHTML = `
-                <div class="h-12 w-full rounded-md mb-2" style="background: linear-gradient(135deg, ${theme['--color-card-gradient-from']}, ${theme['--color-card-gradient-to']})"></div>
-                <p class="font-medium">${themeName}</p>
-            `;
-            themeSelector.appendChild(button);
-        }
-    }
-
-    themeSelector.addEventListener('click', (e) => {
-        const themeBtn = e.target.closest('.theme-btn');
-        if (themeBtn) {
-            const themeName = themeBtn.dataset.theme;
-            applyTheme(themeName);
-            saveTheme(themeName);
-            document.querySelectorAll('.theme-btn').forEach(btn => {
-                btn.classList.toggle('border-white', btn.dataset.theme === themeName);
-                 btn.classList.toggle('border-transparent', btn.dataset.theme !== themeName);
-            });
-        }
-    });
-
-    // --- MAIN FUNCTIONS ---
-    function getCurrentDate() {
-        return new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-    
-    function exportToCsv(filename, headers, data) {
-        const rows = data.map(item =>
-            headers.map(header => `"${(item[header.toLowerCase()] || '').toString().replace(/"/g, '""')}"`).join(',')
-        );
-        const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n" + rows.join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    function showPage(targetId) {
-        pageSections.forEach(section => {
-            section.classList.toggle('hidden', section.id !== targetId);
-        });
-        const targetLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
-        if (targetLink) {
-            pageTitle.textContent = targetLink.querySelector('span').textContent;
-        }
-        navLinks.forEach(link => {
-            link.classList.remove('bg-slate-700');
-            if (link.dataset.target === targetId) {
-                link.classList.add('bg-slate-700');
-            }
-        });
-        mobileSidebar.classList.add('-translate-x-full');
-    }
-
     function updateUI() {
-        rebuildCardAccounts();
-        const activeAccount = accounts.find(acc => acc.id === activeAccountId);
-        if (activeAccount) {
-            activeAccountName.textContent = activeAccount.name;
-            activeAccountNameControl.textContent = activeAccount.name;
-        } else { // Fallback if active card account was deleted
-            activeAccountId = 'current';
-            const currentAcc = accounts.find(acc => acc.id === 'current');
-            activeAccountName.textContent = currentAcc.name;
-            activeAccountNameControl.textContent = currentAcc.name;
-        }
-        
-        cardBalance.textContent = `Rs ${accounts.find(a => a.id === 'current').balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-        cardFrozenOverlay.classList.toggle('hidden', !isCardFrozen);
-        cardFrozenOverlayControl.classList.toggle('hidden', !isCardFrozen);
-        freezeToggle.checked = isCardFrozen;
-        [cardDisplay, cardDisplayControl].forEach(el => el.classList.toggle('grayscale', isCardFrozen));
+        try {
+            rebuildCardAccounts();
+            
+            const activeAccount = accounts.find(acc => acc.id === activeAccountId);
+            if (!activeAccount) activeAccountId = 'current';
+            
+            const currentActiveAccount = accounts.find(acc => acc.id === activeAccountId);
+            if(activeAccountName) activeAccountName.textContent = currentActiveAccount.name;
+            if(activeAccountNameControl) activeAccountNameControl.textContent = currentActiveAccount.name;
+            
+            if(cardBalance) cardBalance.textContent = `Rs ${accounts.find(a => a.id === 'current').balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            if(cardFrozenOverlay) cardFrozenOverlay.classList.toggle('hidden', !isCardFrozen);
+            if(cardFrozenOverlayControl) cardFrozenOverlayControl.classList.toggle('hidden', !isCardFrozen);
+            if(freezeToggle) freezeToggle.checked = isCardFrozen;
+            [cardDisplay, cardDisplayControl].forEach(el => { if(el) el.classList.toggle('grayscale', isCardFrozen) });
 
-        populateAccountSelector();
-        renderDashboardItems();
-        renderBudgetTotals();
-        renderBudgets();
+            populateAccountSelector();
+            renderDashboardItems();
+            renderBudgets();
+            renderVaults();
+            renderAllHistory();
+            populateTransactions();
+
+            lucide.createIcons();
+        } catch (error) {
+            console.error("Failed to update UI:", error);
+        }
     }
 
-    // Rebuild the list of accounts assignable to the card
     function rebuildCardAccounts() {
         const assignedBudgets = budgetsData.filter(b => b.isCardAssigned);
         const currentAccount = { id: 'current', name: 'Current Account', balance: accounts.find(a=>a.id==='current').balance, type: 'account' };
         
         accounts = [currentAccount, ...assignedBudgets.map(b => ({
-            id: b.id,
-            name: `${b.name} Jar`,
-            balance: b.limit - b.spent,
-            type: 'budget'
+            id: b.id, name: `${b.name} Jar`, balance: b.limit - b.spent, type: 'budget'
         }))];
     }
 
     function populateAccountSelector() {
+        if (!accountSelector) return;
         accountSelector.innerHTML = '';
         accounts.forEach(account => {
             const isChecked = account.id === activeAccountId;
@@ -849,10 +1030,10 @@
                 </label>
             `);
         });
-        lucide.createIcons();
     }
     
     function populateTransactions() {
+        if (!transactionList) return;
         transactionList.innerHTML = '';
         transactionsData.forEach(tx => {
             const amountClass = tx.amount > 0 ? 'text-green-400' : 'text-slate-300';
@@ -862,7 +1043,7 @@
                     <td class="p-4">${tx.date}</td>
                     <td class="p-4 font-medium">${tx.desc}</td>
                     <td class="p-4 text-slate-400">${tx.cat}</td>
-                    <td class="p-4 text-right font-mono ${amountClass}">${sign}Rs ${Math.abs(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td class="p-4 text-right font-mono ${amountClass}">${sign}Rs ${Math.abs(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 </tr>
             `);
         });
@@ -870,6 +1051,9 @@
     
     function renderDashboardItems() {
         const dashboardBudgets = document.getElementById('dashboard-budgets');
+        const dashboardVaults = document.getElementById('dashboard-vaults');
+        if (!dashboardBudgets || !dashboardVaults) return;
+        
         dashboardBudgets.innerHTML = '';
         budgetsData.slice(0, 3).forEach(budget => {
             const percentage = budget.limit > 0 ? Math.round((budget.spent / budget.limit) * 100) : 0;
@@ -882,7 +1066,7 @@
                         <span class="font-medium">${budget.name}</span>
                     </div>
                     <div class="text-center my-auto py-2">
-                        <p class="text-2xl font-bold font-mono">Rs ${budget.spent.toLocaleString()}</p>
+                        <p class="text-2xl font-bold font-mono">Rs ${budget.spent.toLocaleString('en-IN')}</p>
                         <p class="font-medium text-sm mt-1" style="color: ${percentageColor}">${percentage}% Used</p>
                     </div>
                     <div class="w-full progress-bar-bg rounded-full h-2.5 mt-auto">
@@ -892,50 +1076,55 @@
             `);
         });
 
-        const dashboardVaults = document.getElementById('dashboard-vaults');
         dashboardVaults.innerHTML = '';
         let totalSaved = 0;
         vaultsData.forEach(vault => {
             totalSaved += vault.current;
-            const percentage = vault.target > 0 ? Math.round((vault.current / vault.target) * 100) : 0;
+            const isSavings = vault.isSavingsAccount;
+            const percentage = !isSavings && vault.target > 0 ? Math.round((vault.current / vault.target) * 100) : 0;
             dashboardVaults.insertAdjacentHTML('beforeend', `
-                 <div class="bg-slate-900/50 p-4 rounded-xl flex flex-col h-full">
+                 <div class="bg-slate-900/50 p-4 rounded-xl flex flex-col h-full ${isSavings ? 'border border-green-500/30' : ''}">
                     <div class="flex items-center space-x-3">
                          <div class="p-2 bg-${vault.color}-500/20 rounded-lg"><i data-lucide="${vault.icon}" class="w-5 h-5 text-${vault.color}-400"></i></div>
                         <span class="font-medium">${vault.name}</span>
                     </div>
                     <div class="text-center my-auto py-2">
-                        <p class="text-2xl font-bold font-mono">Rs ${vault.current.toLocaleString()}</p>
-                        <p class="font-medium text-sm mt-1" style="color: var(--color-primary)">${percentage}% Complete</p>
+                        <p class="text-2xl font-bold font-mono">Rs ${isSavings ? Math.floor(vault.current).toLocaleString('en-IN') : vault.current.toLocaleString('en-IN')}</p>
+                        <p class="font-medium text-sm mt-1" style="color: var(--color-primary)">${isSavings ? `${(vault.returnRate * 100).toFixed(0)}% APR` : `${percentage}% Complete`}</p>
                     </div>
+                    ${!isSavings ? `
                     <div class="w-full progress-bar-bg rounded-full h-2.5 mt-auto">
                         <div class="progress-bar-fill h-2.5 rounded-full" style="width: ${percentage}%"></div>
-                    </div>
+                    </div>` : '<div class="h-2.5 mt-auto"></div>' }
                 </div>
             `);
         });
         
         const totalSavedVaultsPage = document.getElementById('total-saved-vaults-page');
-        if(totalSavedVaultsPage) totalSavedVaultsPage.textContent = `Rs ${totalSaved.toLocaleString()}`;
-
-        lucide.createIcons();
+        if(totalSavedVaultsPage) totalSavedVaultsPage.textContent = `Rs ${totalSaved.toLocaleString('en-IN')}`;
     }
     
     function renderBudgetTotals() {
+        const totalBudgetedEl = document.getElementById('total-budgeted');
+        if (!totalBudgetedEl) return;
+        
         const totalBudgeted = budgetsData.reduce((sum, b) => sum + b.limit, 0);
         const totalSpent = budgetsData.reduce((sum, b) => sum + b.spent, 0);
         const totalRemaining = totalBudgeted - totalSpent;
         
-        document.getElementById('total-budgeted').textContent = `Rs ${totalBudgeted.toLocaleString()}`;
-        document.getElementById('total-spent').textContent = `Rs ${totalSpent.toLocaleString()}`;
-        document.getElementById('total-remaining').textContent = `Rs ${totalRemaining.toLocaleString()}`;
+        totalBudgetedEl.textContent = `Rs ${totalBudgeted.toLocaleString('en-IN')}`;
+        document.getElementById('total-spent').textContent = `Rs ${totalSpent.toLocaleString('en-IN')}`;
+        document.getElementById('total-remaining').textContent = `Rs ${totalRemaining.toLocaleString('en-IN')}`;
     }
 
     function renderBudgets() {
         const container = document.getElementById('budgets-list');
+        if (!container) return;
+        
         container.innerHTML = '';
         const assignedCount = budgetsData.filter(b => b.isCardAssigned).length;
         const canAssignMore = assignedCount < MAX_CARD_ASSIGNMENTS;
+        const baseButtonClasses = "card-assign-btn text-xs py-1 px-2 rounded";
 
         budgetsData.forEach((budget, index) => {
             const percentage = budget.limit > 0 ? Math.round((budget.spent / budget.limit) * 100) : 0;
@@ -944,11 +1133,11 @@
             
             let cardAssignmentButton;
             if (budget.isCardAssigned) {
-                cardAssignmentButton = `<button class="card-assign-btn text-xs btn-secondary py-1 px-2 rounded" data-id="${budget.id}" data-action="unassign">Unassign</button>`;
+                cardAssignmentButton = `<button class="${baseButtonClasses} btn-secondary" data-id="${budget.id}" data-action="unassign">Unassign</button>`;
             } else if (canAssignMore) {
-                cardAssignmentButton = `<button class="card-assign-btn text-xs btn-primary py-1 px-2 rounded" data-id="${budget.id}" data-action="assign">Assign to Card</button>`;
+                cardAssignmentButton = `<button class="${baseButtonClasses} btn-primary" data-id="${budget.id}" data-action="assign">Assign to Card</button>`;
             } else {
-                cardAssignmentButton = `<button class="text-xs btn-disabled py-1 px-2 rounded" disabled>Slots Full</button>`;
+                cardAssignmentButton = `<button class="${baseButtonClasses} btn-disabled" disabled>Slots Full</button>`;
             }
 
             container.insertAdjacentHTML('beforeend', `
@@ -958,7 +1147,7 @@
                             <div class="p-3 bg-${budget.color}-500/20 rounded-lg"><i data-lucide="${budget.icon}" class="w-6 h-6 text-${budget.color}-400"></i></div>
                             <div>
                                 <h4 class="font-semibold text-lg flex items-center">${budget.name} ${budget.isCardAssigned ? '<i data-lucide="credit-card" class="w-4 h-4 text-green-400 ml-2"></i>' : ''}</h4>
-                                <p class="text-sm text-slate-400">Spent <span class="font-mono">Rs ${budget.spent.toLocaleString()}</span> of <span class="font-mono">Rs ${budget.limit.toLocaleString()}</span></p>
+                                <p class="text-sm text-slate-400">Spent <span class="font-mono">Rs ${budget.spent.toLocaleString('en-IN')}</span> of <span class="font-mono">Rs ${budget.limit.toLocaleString('en-IN')}</span></p>
                             </div>
                         </div>
                         <div class="text-right">
@@ -979,6 +1168,8 @@
 
         const newBudgetBtn = document.getElementById('new-budget-btn');
         const budgetCountText = document.getElementById('budget-count-text');
+        if (!newBudgetBtn || !budgetCountText) return;
+
         if (budgetsData.length >= MAX_BUDGETS) {
             newBudgetBtn.classList.add('btn-disabled');
             newBudgetBtn.disabled = true;
@@ -990,45 +1181,91 @@
         }
 
         renderBudgetTotals();
-        lucide.createIcons();
     }
 
     function renderVaults() {
-        const container = document.getElementById('vaults-list');
-        container.innerHTML = '';
-        vaultsData.forEach(vault => {
+        const savingsContainer = document.getElementById('savings-account-container');
+        const goalsContainer = document.getElementById('vaults-list');
+        if (!savingsContainer || !goalsContainer) return;
+        
+        savingsContainer.innerHTML = '';
+        goalsContainer.innerHTML = '';
+        
+        const savingsAccount = vaultsData.find(v => v.isSavingsAccount);
+        const goalVaults = vaultsData.filter(v => !v.isSavingsAccount);
+
+        if (savingsAccount) {
+            savingsContainer.insertAdjacentHTML('beforeend', `
+                <div class="bg-slate-900/50 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between border-2 border-green-500/50">
+                    <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                        <div class="p-3 bg-green-500/20 rounded-lg"><i data-lucide="${savingsAccount.icon}" class="w-8 h-8 text-green-400"></i></div>
+                        <div>
+                            <h4 class="font-semibold text-lg">${savingsAccount.name}</h4>
+                            <p class="text-sm text-slate-400">Saved: Rs ${Math.floor(savingsAccount.current).toLocaleString('en-IN')}</p>
+                        </div>
+                    </div>
+                    <div class="text-center md:text-right mb-4 md:mb-0 md:mx-auto">
+                        <p class="text-2xl font-bold font-mono">Rs ${Math.floor(savingsAccount.current).toLocaleString('en-IN')}</p>
+                        <p class="font-medium mt-1 text-green-400">Interest Bearing (${(savingsAccount.returnRate * 100).toFixed(0)}% APR)</p>
+                    </div>
+                    <div class="flex gap-4 md:flex-col md:w-36">
+                        <button class="vault-action-btn flex-1 btn-secondary py-2 rounded-lg" data-id="${savingsAccount.id}" data-type="withdraw">Withdraw</button>
+                        <button class="vault-action-btn flex-1 btn-primary py-2 rounded-lg" data-id="${savingsAccount.id}" data-type="deposit">Deposit</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        goalVaults.forEach(vault => {
             const percentage = vault.target > 0 ? Math.round((vault.current / vault.target) * 100) : 0;
-            container.insertAdjacentHTML('beforeend', `
+            goalsContainer.insertAdjacentHTML('beforeend', `
                 <div class="bg-slate-900/50 p-6 rounded-2xl flex flex-col">
                     <div class="flex items-start justify-between mb-4">
                         <div class="flex items-center space-x-4">
                             <div class="p-3 bg-${vault.color}-500/20 rounded-lg"><i data-lucide="${vault.icon}" class="w-8 h-8 text-${vault.color}-400"></i></div>
-                             <div>
+                                <div>
                                 <h4 class="font-semibold text-lg">${vault.name}</h4>
-                                <p class="text-sm text-slate-400">Target: Rs ${vault.target.toLocaleString()}</p>
+                                <p class="text-sm text-slate-400">Target: Rs ${vault.target.toLocaleString('en-IN')}</p>
                             </div>
                         </div>
                         <button class="delete-item-btn text-slate-500 hover:text-red-500" data-id="${vault.id}" data-type="vault"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                     </div>
                     <div class="text-center my-4 flex-1">
-                        <p class="text-3xl font-bold font-mono">Rs ${vault.current.toLocaleString()}</p>
+                        <p class="text-3xl font-bold font-mono">Rs ${vault.current.toLocaleString('en-IN')}</p>
                         <p class="font-medium mt-1" style="color: var(--color-primary)">${percentage}% Complete</p>
                     </div>
                     <div class="w-full progress-bar-bg rounded-full h-3 mb-4">
                         <div class="progress-bar-fill h-3 rounded-full" style="width: ${percentage}%"></div>
                     </div>
-                     <div class="flex gap-4">
-                         <button class="vault-action-btn flex-1 btn-secondary py-2 rounded-lg" data-id="${vault.id}" data-type="withdraw">Withdraw</button>
-                         <button class="vault-action-btn flex-1 btn-primary py-2 rounded-lg" data-id="${vault.id}" data-type="deposit">Deposit</button>
-                     </div>
+                        <div class="flex gap-4">
+                            <button class="vault-action-btn flex-1 btn-secondary py-2 rounded-lg" data-id="${vault.id}" data-type="withdraw">Withdraw</button>
+                            <button class="vault-action-btn flex-1 btn-primary py-2 rounded-lg" data-id="${vault.id}" data-type="deposit">Deposit</button>
+                        </div>
                 </div>
             `);
         });
-        lucide.createIcons();
     }
     
     function renderAllHistory() {
+        const savingsHistoryList = document.getElementById('savings-history-list');
         const vaultHistoryList = document.getElementById('vault-history-list');
+        const budgetHistoryList = document.getElementById('budget-history-list');
+        if (!savingsHistoryList || !vaultHistoryList || !budgetHistoryList) return;
+        
+        savingsHistoryList.innerHTML = '';
+        savingsAccountHistoryData.forEach(item => {
+            const amountClass = item.amount > 0 ? 'text-green-400' : 'text-red-400';
+            const sign = item.amount > 0 ? '+' : '-';
+            savingsHistoryList.insertAdjacentHTML('beforeend', `
+                <tr class="border-b last:border-b-0" style="border-color: var(--color-border);">
+                    <td class="p-3 text-slate-400">${item.date}</td>
+                    <td class="p-3 font-medium">${item.action}</td>
+                    <td class="p-3">${item.details}</td>
+                    <td class="p-3 text-right font-mono ${amountClass}">${sign}Rs ${Math.abs(item.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                </tr>
+            `);
+        });
+
         vaultHistoryList.innerHTML = '';
         vaultHistoryData.forEach(item => {
             vaultHistoryList.insertAdjacentHTML('beforeend', `
@@ -1040,7 +1277,6 @@
             `);
         });
         
-        const budgetHistoryList = document.getElementById('budget-history-list');
         budgetHistoryList.innerHTML = '';
         budgetHistoryData.forEach(item => {
             budgetHistoryList.insertAdjacentHTML('beforeend', `
@@ -1053,255 +1289,230 @@
         });
     }
 
+
     // --- EVENT LISTENERS ---
-    document.body.addEventListener('click', (e) => {
-        // Navigation
-        const navLink = e.target.closest('.nav-link');
-        if (navLink) {
-            e.preventDefault();
-            showPage(navLink.dataset.target);
-        }
-
-        // New Item Buttons
-        if (e.target.closest('#new-vault-btn')) newVaultModal.classList.remove('hidden');
-        if (e.target.closest('#new-budget-btn')) newBudgetModal.classList.remove('hidden');
-
-        // Modal Close Buttons
-        const modal = e.target.closest('.fixed.inset-0');
-        if (e.target.dataset.action === 'close' || e.target === modal) {
-            modal.classList.add('hidden');
-        }
-
-        // Update Budget Button
-        const updateBtn = e.target.closest('.update-budget-btn');
-        if(updateBtn) {
-            const budgetId = updateBtn.dataset.id;
-            const budget = budgetsData.find(b => b.id === budgetId);
-            if(budget) {
-                document.getElementById('update-budget-id').value = budget.id;
-                document.getElementById('update-budget-name').value = budget.name;
-                document.getElementById('update-budget-limit').value = budget.limit;
-                updateBudgetModal.classList.remove('hidden');
+    function setupEventListeners() {
+        document.body.addEventListener('click', (e) => {
+            // Navigation
+            const navLink = e.target.closest('.nav-link');
+            if (navLink) {
+                e.preventDefault();
+                showPage(navLink.dataset.target);
             }
-        }
 
-        // Vault Action Button (Deposit/Withdraw)
-        const vaultActionBtn = e.target.closest('.vault-action-btn');
-        if(vaultActionBtn) {
-            const vaultId = vaultActionBtn.dataset.id;
-            const actionType = vaultActionBtn.dataset.type;
-            const vault = vaultsData.find(v => v.id === vaultId);
-            if(vault) {
-                document.getElementById('vault-action-title').textContent = `${actionType.charAt(0).toUpperCase() + actionType.slice(1)} to ${vault.name}`;
-                document.getElementById('vault-action-id').value = vault.id;
-                document.getElementById('vault-action-type').value = actionType;
-                document.getElementById('vault-action-submit').textContent = `Confirm ${actionType.charAt(0).toUpperCase() + actionType.slice(1)}`;
-                vaultActionModal.classList.remove('hidden');
+            // New Item Buttons
+            if (e.target.closest('#new-vault-btn')) {
+                newVaultModal.classList.remove('hidden');
+                document.getElementById('vault-name').focus();
             }
-        }
+            if (e.target.closest('#new-budget-btn')) {
+                newBudgetModal.classList.remove('hidden');
+                document.getElementById('budget-name').focus();
+            }
 
-        // Delete Item Button
-        const deleteBtn = e.target.closest('.delete-item-btn');
-        if (deleteBtn) {
-            itemToDelete = { id: deleteBtn.dataset.id, type: deleteBtn.dataset.type };
-            const item = itemToDelete.type === 'budget' 
-                ? budgetsData.find(b => b.id === itemToDelete.id)
-                : vaultsData.find(v => v.id === itemToDelete.id);
+            // Modal Close Buttons
+            const modal = e.target.closest('.fixed.inset-0');
+            if (e.target.dataset.action === 'close' || e.target === modal) {
+                modal.classList.add('hidden');
+            }
+
+            // Update Budget Button
+            const updateBtn = e.target.closest('.update-budget-btn');
+            if(updateBtn) {
+                const budgetId = updateBtn.dataset.id;
+                const budget = budgetsData.find(b => b.id === budgetId);
+                if(budget) {
+                    document.getElementById('update-budget-id').value = budget.id;
+                    document.getElementById('update-budget-name').value = budget.name;
+                    document.getElementById('update-budget-limit').value = budget.limit;
+                    updateBudgetModal.classList.remove('hidden');
+                }
+            }
+
+            // Vault Action Button (Deposit/Withdraw)
+            const vaultActionBtn = e.target.closest('.vault-action-btn');
+            if(vaultActionBtn) {
+                const vaultId = vaultActionBtn.dataset.id;
+                const actionType = vaultActionBtn.dataset.type;
+                const vault = vaultsData.find(v => v.id === vaultId);
+                if(vault) {
+                    document.getElementById('vault-action-title').textContent = `${actionType.charAt(0).toUpperCase() + actionType.slice(1)} to ${vault.name}`;
+                    document.getElementById('vault-action-id').value = vault.id;
+                    document.getElementById('vault-action-type').value = actionType;
+                    document.getElementById('vault-action-submit').textContent = `Confirm ${actionType.charAt(0).toUpperCase() + actionType.slice(1)}`;
+                    vaultActionModal.classList.remove('hidden');
+                    document.getElementById('vault-action-amount').focus();
+                }
+            }
+
+            // Delete Item Button
+            const deleteBtn = e.target.closest('.delete-item-btn');
+            if (deleteBtn) {
+                itemToDelete = { id: deleteBtn.dataset.id, type: deleteBtn.dataset.type };
+                const item = itemToDelete.type === 'budget' 
+                    ? budgetsData.find(b => b.id === itemToDelete.id)
+                    : vaultsData.find(v => v.id === itemToDelete.id);
+                
+                if (item.isSavingsAccount) {
+                    alert("The main Savings Account cannot be deleted.");
+                    return;
+                }
+
+                document.getElementById('confirm-delete-title').textContent = `Delete ${item.name}?`;
+                let message = `This will permanently delete the ${itemToDelete.type}.`;
+                if (itemToDelete.type === 'vault' && item.current > 0) {
+                    message += ` The remaining balance of Rs ${item.current.toLocaleString('en-IN')} will be returned to your Current Account.`
+                }
+                document.getElementById('confirm-delete-message').textContent = message;
+                confirmDeleteModal.classList.remove('hidden');
+            }
+
+            // Card Assignment Button
+            const assignBtn = e.target.closest('.card-assign-btn');
+            if (assignBtn) {
+                const budgetId = assignBtn.dataset.id;
+                const action = assignBtn.dataset.action;
+                const budget = budgetsData.find(b => b.id === budgetId);
+                if (budget) {
+                    budget.isCardAssigned = (action === 'assign');
+                    updateUI();
+                }
+            }
+        });
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            const { id, type } = itemToDelete;
+            if (type === 'budget') {
+                deleteBudget(id);
+            } else if (type === 'vault') {
+                deleteVault(id);
+            }
             
-            document.getElementById('confirm-delete-title').textContent = `Delete ${item.name}?`;
-            let message = `This will permanently delete the ${itemToDelete.type}.`;
-            if (itemToDelete.type === 'vault' && item.current > 0) {
-                message += ` The remaining balance of Rs ${item.current.toLocaleString()} will be returned to your Current Account.`
-            }
-            document.getElementById('confirm-delete-message').textContent = message;
-            confirmDeleteModal.classList.remove('hidden');
-        }
+            confirmDeleteModal.classList.add('hidden');
+            updateUI();
+            itemToDelete = { id: null, type: null };
+        });
 
-        // Card Assignment Button
-        const assignBtn = e.target.closest('.card-assign-btn');
-        if (assignBtn) {
-            const budgetId = assignBtn.dataset.id;
-            const action = assignBtn.dataset.action;
-            const budget = budgetsData.find(b => b.id === budgetId);
-            if (budget) {
-                budget.isCardAssigned = (action === 'assign');
+        accountSelector.addEventListener('change', (e) => {
+            if(e.target.name === 'activeAccount') {
+                activeAccountId = e.target.value;
                 updateUI();
             }
-        }
-    });
-
-    confirmDeleteBtn.addEventListener('click', () => {
-        const { id, type } = itemToDelete;
-        if (type === 'budget') {
-            budgetsData = budgetsData.filter(b => b.id !== id);
-            budgetHistoryData.unshift({
-                date: getCurrentDate(), action: 'Deleted', details: `Budget item removed.`
-            });
-        } else if (type === 'vault') {
-            const vault = vaultsData.find(v => v.id === id);
-            if (vault.current > 0) {
-                accounts.find(a => a.id === 'current').balance += vault.current;
+        });
+        
+        freezeToggle.addEventListener('change', () => { isCardFrozen = !isCardFrozen; updateUI(); });
+        
+        locateCardBtnSettings.addEventListener('click', () => mapModal.classList.remove('hidden'));
+        closeMapModalBtn.addEventListener('click', () => mapModal.classList.add('hidden'));
+        
+        mobileMenuButton.addEventListener('click', () => mobileSidebar.classList.remove('-translate-x-full'));
+        closeMobileMenuButton.addEventListener('click', () => mobileSidebar.classList.add('-translate-x-full'));
+        
+        newVaultForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = e.target.elements['vault-name'].value;
+            const target = parseFloat(e.target.elements['vault-target'].value);
+            if (createVault(name, target)) {
+                updateUI();
+                newVaultModal.classList.add('hidden');
+                e.target.reset();
             }
-            vaultsData = vaultsData.filter(v => v.id !== id);
-            vaultHistoryData.unshift({
-                date: getCurrentDate(), action: 'Deleted', details: `Vault "${vault.name}" removed. Rs ${vault.current.toLocaleString()} returned.`
-            });
-            renderVaults();
-        }
-        
-        confirmDeleteModal.classList.add('hidden');
-        renderAllHistory();
-        updateUI(); // This will re-render budgets and update card accounts
-        itemToDelete = { id: null, type: null };
-    });
+        });
 
-    accountSelector.addEventListener('change', (e) => {
-        if(e.target.name === 'activeAccount') {
-            activeAccountId = e.target.value;
-            updateUI();
-        }
-    });
-    
-    function toggleFreeze() { isCardFrozen = !isCardFrozen; updateUI(); }
-    freezeToggle.addEventListener('change', toggleFreeze);
-    freezeBtnQuick.addEventListener('click', toggleFreeze);
-    
-    locateCardBtn.addEventListener('click', () => mapModal.classList.remove('hidden'));
-    closeMapModalBtn.addEventListener('click', () => mapModal.classList.add('hidden'));
-    
-    mobileMenuButton.addEventListener('click', () => mobileSidebar.classList.remove('-translate-x-full'));
-    closeMobileMenuButton.addEventListener('click', () => mobileSidebar.classList.add('-translate-x-full'));
-    
-    newVaultForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = e.target.elements['vault-name'].value;
-        const target = parseFloat(e.target.elements['vault-target'].value);
-        if (name && target > 0) {
-            vaultsData.unshift({
-                id: name.toLowerCase().replace(/\s+/g, '-'),
-                name: name, current: 0, target: target, icon: 'package-plus', color: 'teal'
-            });
-            vaultHistoryData.unshift({
-                date: getCurrentDate(), action: 'Created', details: `${name} (Target: Rs ${target.toLocaleString()})`
-            });
-            renderVaults();
-            renderDashboardItems();
-            renderAllHistory();
-            newVaultModal.classList.add('hidden');
-            e.target.reset();
-        }
-    });
+        newBudgetForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = e.target.elements['budget-name'].value;
+            const limit = parseFloat(e.target.elements['budget-limit'].value);
+            if (createBudget(name, limit)) {
+                updateUI();
+                newBudgetModal.classList.add('hidden');
+                e.target.reset();
+            }
+        });
 
-    newBudgetForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        if (budgetsData.length >= MAX_BUDGETS) return;
-        const name = e.target.elements['budget-name'].value;
-        const limit = parseFloat(e.target.elements['budget-limit'].value);
-        if (name && limit > 0) {
-            const newBudgetId = name.toLowerCase().replace(/\s+/g, '-');
-            budgetsData.unshift({
-                id: newBudgetId, name: name, spent: 0, limit: limit, icon: 'receipt', color: 'purple', isCardAssigned: false
-            });
-            budgetHistoryData.unshift({
-                date: getCurrentDate(), action: 'Created', details: `${name} Budget (Limit: Rs ${limit.toLocaleString()})`
-            });
-            updateUI(); // Re-renders budgets, dashboard, etc.
-            renderAllHistory();
-            newBudgetModal.classList.add('hidden');
-            e.target.reset();
-        }
-    });
-
-    updateBudgetForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const budgetId = e.target.elements['update-budget-id'].value;
-        const newName = e.target.elements['update-budget-name'].value;
-        const newLimit = parseFloat(e.target.elements['update-budget-limit'].value);
-        
-        const budget = budgetsData.find(b => b.id === budgetId);
-
-        if(budget && newName && newLimit > 0) {
-            const oldLimit = budget.limit;
-            budget.name = newName;
-            budget.limit = newLimit;
+        updateBudgetForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const budgetId = e.target.elements['update-budget-id'].value;
+            const newName = e.target.elements['update-budget-name'].value;
+            const newLimit = parseFloat(e.target.elements['update-budget-limit'].value);
             
-            budgetHistoryData.unshift({
-                date: getCurrentDate(), action: 'Updated', details: `${newName} (Limit: Rs ${oldLimit.toLocaleString()} -> Rs ${newLimit.toLocaleString()})`
-            });
-            
-            updateUI();
-            renderAllHistory();
-            updateBudgetModal.classList.add('hidden');
-            e.target.reset();
-        }
-    });
-
-    vaultActionForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const vaultId = e.target.elements['vault-action-id'].value;
-        const actionType = e.target.elements['vault-action-type'].value;
-        const amount = parseFloat(e.target.elements['vault-action-amount'].value);
-
-        const vault = vaultsData.find(v => v.id === vaultId);
-        const currentAccount = accounts.find(a => a.id === 'current');
-
-        if (!vault || !currentAccount || !amount || amount <= 0) return;
-
-        if (actionType === 'deposit') {
-            if (currentAccount.balance >= amount) {
-                vault.current += amount;
-                currentAccount.balance -= amount;
-                vaultHistoryData.unshift({
-                    date: getCurrentDate(), action: 'Deposited', details: `Rs ${amount.toLocaleString()} to ${vault.name}`
-                });
-            } else {
-                alert('Insufficient funds in Current Account.');
-                return;
+            if(updateBudget(budgetId, newName, newLimit)) {
+                updateUI();
+                updateBudgetModal.classList.add('hidden');
+                e.target.reset();
             }
-        } else if (actionType === 'withdraw') {
-            if (vault.current >= amount) {
-                vault.current -= amount;
-                currentAccount.balance += amount;
-                vaultHistoryData.unshift({
-                    date: getCurrentDate(), action: 'Withdrew', details: `Rs ${amount.toLocaleString()} from ${vault.name}`
-                });
-            } else {
-                alert('Insufficient funds in vault.');
-                return;
+        });
+
+        vaultActionForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const vaultId = e.target.elements['vault-action-id'].value;
+            const actionType = e.target.elements['vault-action-type'].value;
+            const amount = parseFloat(e.target.elements['vault-action-amount'].value);
+
+            if (handleVaultTransaction(vaultId, actionType, amount)) {
+                updateUI();
+                vaultActionModal.classList.add('hidden');
+                e.target.reset();
             }
-        }
+        });
         
-        renderVaults();
-        renderDashboardItems();
-        updateUI();
-        renderAllHistory();
-        vaultActionModal.classList.add('hidden');
-        e.target.reset();
-    });
-    
-    showVaultHistoryBtn.addEventListener('click', () => {
-        vaultHistoryContainer.classList.toggle('hidden');
-        budgetHistoryContainer.classList.add('hidden');
-    });
+        showSavingsHistoryBtn.addEventListener('click', () => {
+            savingsHistoryContainer.classList.toggle('hidden');
+            vaultHistoryContainer.classList.add('hidden');
+            budgetHistoryContainer.classList.add('hidden');
+        });
 
-    showBudgetHistoryBtn.addEventListener('click', () => {
-        budgetHistoryContainer.classList.toggle('hidden');
-        vaultHistoryContainer.classList.add('hidden');
-    });
-    
-    exportSpendingBtn.addEventListener('click', () => exportToCsv('spending_history.csv', ['date', 'desc', 'cat', 'amount'], transactionsData));
-    exportVaultHistoryBtn.addEventListener('click', () => exportToCsv('vault_history.csv', ['date', 'action', 'details'], vaultHistoryData));
-    exportBudgetHistoryBtn.addEventListener('click', () => exportToCsv('budget_history.csv', ['date', 'action', 'details'], budgetHistoryData));
+        showVaultHistoryBtn.addEventListener('click', () => {
+            vaultHistoryContainer.classList.toggle('hidden');
+            savingsHistoryContainer.classList.add('hidden');
+            budgetHistoryContainer.classList.add('hidden');
+        });
+
+        showBudgetHistoryBtn.addEventListener('click', () => {
+            budgetHistoryContainer.classList.toggle('hidden');
+            vaultHistoryContainer.classList.add('hidden');
+            savingsHistoryContainer.classList.add('hidden');
+        });
+        
+        simulatePayoutBtn.addEventListener('click', () => {
+            calculateAndApplyMonthlyReturns();
+            updateUI();
+        });
+        
+        exportSpendingBtn.addEventListener('click', () => exportToCsv('spending_history.csv', ['date', 'desc', 'cat', 'amount'], transactionsData));
+        exportSavingsHistoryBtn.addEventListener('click', () => exportToCsv('savings_account_history.csv', ['date', 'action', 'details', 'amount'], savingsAccountHistoryData));
+        exportVaultHistoryBtn.addEventListener('click', () => exportToCsv('vault_history.csv', ['date', 'action', 'details'], vaultHistoryData));
+        exportBudgetHistoryBtn.addEventListener('click', () => exportToCsv('budget_history.csv', ['date', 'action', 'details'], budgetHistoryData));
+        
+        themeSelector.addEventListener('click', (e) => {
+            const themeBtn = e.target.closest('.theme-btn');
+            if (themeBtn) {
+                const themeName = themeBtn.dataset.theme;
+                applyTheme(themeName);
+                saveTheme(themeName);
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.classList.toggle('border-white', btn.dataset.theme === themeName);
+                    btn.classList.toggle('border-transparent', btn.dataset.theme !== themeName);
+                });
+            }
+        });
+    }
+
 
     // --- INITIALIZATION ---
-    document.addEventListener('DOMContentLoaded', () => {
+    function init() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
         generateThemeSelector();
+        setupEventListeners();
         updateUI();
-        populateTransactions();
-        renderVaults();
-        renderAllHistory();
         showPage('dashboard');
-    });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+
+})(); // IIFE End
 </script>
 </body>
 </html>
