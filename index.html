@@ -6,7 +6,7 @@
     <title>FinVault - Your Financial Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
     <style>
         :root {
             --color-bg: #0f172a;
@@ -70,6 +70,21 @@
             cursor: not-allowed;
             opacity: 0.6;
         }
+        /* QR Scanner Animation */
+        .qr-scanner-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+            box-shadow: 0 0 10px var(--color-primary);
+            animation: scan 2.5s infinite linear;
+        }
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
         /* For custom scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
@@ -87,508 +102,730 @@
         }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="h-screen overflow-hidden">
 
-    <!-- Sidebar -->
-    <aside class="sidebar w-16 md:w-64 flex-shrink-0 transition-all duration-300 ease-in-out hidden sm:flex flex-col">
-        <div class="flex items-center justify-center md:justify-start px-4 h-20 border-b" style="border-color: var(--color-border);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8" style="color: var(--color-primary)"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-            <h1 class="text-2xl font-bold ml-2 hidden md:block">FinVault</h1>
+    <!-- Authentication Container -->
+    <div id="auth-container" class="w-full h-full flex items-center justify-center p-4">
+        <!-- Login Screen -->
+        <div id="login-screen" class="w-full max-w-sm hidden">
+            <div class="text-center mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-12 w-12 mx-auto" style="color: var(--color-primary)"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                <h1 class="text-3xl font-bold mt-2">Welcome to FinVault</h1>
+                <p class="text-slate-400">Sign in to continue to your dashboard.</p>
+            </div>
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-slate-300 mb-1">Email Address</label>
+                    <input type="email" id="login-email" class="w-full bg-slate-700 border-slate-600 rounded-md p-3" value="demo@finvault.com" required>
+                </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-slate-300 mb-1">Password</label>
+                    <input type="password" id="login-password" class="w-full bg-slate-700 border-slate-600 rounded-md p-3" value="password" required>
+                </div>
+                <button type="submit" class="w-full btn-primary py-3 rounded-lg font-semibold">Sign In</button>
+            </form>
+            <p class="text-center text-sm text-slate-400 mt-6">
+                Don't have an account? <a href="#" id="show-signup" class="font-medium text-green-400 hover:underline">Sign Up</a>
+            </p>
         </div>
-        <nav class="flex-1 px-2 py-4 space-y-2">
-            <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg bg-slate-700" data-target="dashboard">
-                <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
-                <span class="ml-3 hidden md:block">Dashboard</span>
-            </a>
-            <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="card-control">
-                <i data-lucide="credit-card" class="w-6 h-6"></i>
-                <span class="ml-3 hidden md:block">Card Control</span>
-            </a>
-            <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="budgets">
-                <i data-lucide="pie-chart" class="w-6 h-6"></i>
-                <span class="ml-3 hidden md:block">Budgets</span>
-            </a>
-            <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="vaults">
-                <i data-lucide="shield-check" class="w-6 h-6"></i>
-                <span class="ml-3 hidden md:block">Vaults</span>
-            </a>
-             <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="transactions">
-                <i data-lucide="list" class="w-6 h-6"></i>
-                <span class="ml-3 hidden md:block">Transactions</span>
-            </a>
-            <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="settings">
-                <i data-lucide="settings" class="w-6 h-6"></i>
-                <span class="ml-3 hidden md:block">Settings</span>
-            </a>
-        </nav>
-        <div class="px-2 py-4 mt-auto border-t" style="border-color: var(--color-border);">
-             <a href="#" class="flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700">
-                <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" class="w-8 h-8 rounded-full" alt="User Avatar">
-                <span class="ml-3 hidden md:block">John Doe</span>
-            </a>
+        <!-- Signup Screen -->
+        <div id="signup-screen" class="w-full max-w-sm hidden">
+             <div class="text-center mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-12 w-12 mx-auto" style="color: var(--color-primary)"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                <h1 class="text-3xl font-bold mt-2">Create your Account</h1>
+                <p class="text-slate-400">Join FinVault and take control of your finances.</p>
+            </div>
+            <form id="signup-form" class="space-y-6">
+                 <div>
+                    <label for="signup-name" class="block text-sm font-medium text-slate-300 mb-1">Full Name</label>
+                    <input type="text" id="signup-name" class="w-full bg-slate-700 border-slate-600 rounded-md p-3" value="John Doe" required>
+                </div>
+                <div>
+                    <label for="signup-email" class="block text-sm font-medium text-slate-300 mb-1">Email Address</label>
+                    <input type="email" id="signup-email" class="w-full bg-slate-700 border-slate-600 rounded-md p-3" value="demo@finvault.com" required>
+                </div>
+                <div>
+                    <label for="signup-password" class="block text-sm font-medium text-slate-300 mb-1">Password</label>
+                    <input type="password" id="signup-password" class="w-full bg-slate-700 border-slate-600 rounded-md p-3" value="password" required>
+                </div>
+                <button type="submit" class="w-full btn-primary py-3 rounded-lg font-semibold">Create Account</button>
+            </form>
+            <p class="text-center text-sm text-slate-400 mt-6">
+                Already have an account? <a href="#" id="show-login" class="font-medium text-green-400 hover:underline">Sign In</a>
+            </p>
         </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col overflow-hidden">
-        <!-- Header -->
-        <header class="flex items-center justify-between h-20 px-6 border-b bg-slate-800" style="border-color: var(--color-border);">
-             <div class="sm:hidden">
-                 <button id="mobile-menu-button" class="p-2 rounded-md">
-                     <i data-lucide="menu" class="w-6 h-6"></i>
-                 </button>
-             </div>
-             <h1 class="text-xl font-semibold" id="page-title">Dashboard</h1>
-             <div class="flex items-center space-x-4">
-                 <button class="p-2 rounded-full hover:bg-slate-700">
-                     <i data-lucide="bell" class="w-6 h-6"></i>
-                 </button>
-             </div>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-6 md:p-8 space-y-8" id="main-content-area">
-
-            <!-- Dashboard Section -->
-            <section id="dashboard" class="page-section space-y-8">
-                <!-- Card and AI Section -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-2">
-                         <!-- Premium Smart Card -->
-                        <div id="smart-card-display" class="card-gradient p-6 rounded-2xl shadow-lg relative h-56 transition-all duration-300">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-sm text-slate-400">Active Account</p>
-                                    <h3 id="active-account-name" class="text-xl font-semibold">Current Account</h3>
-                                </div>
-                                <div class="flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-white"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                                </div>
-                            </div>
-                            <div class="absolute bottom-6 left-6">
-                                 <p class="text-sm text-slate-400">Total Balance</p>
-                                <p id="card-balance" class="text-3xl font-bold">Rs 124,530.50</p>
-                                <p id="card-number" class="text-lg font-mono tracking-widest mt-2 text-slate-300">**** **** **** 8021</p>
-                            </div>
-                            <div id="card-frozen-overlay" class="absolute inset-0 bg-black bg-opacity-60 rounded-2xl flex items-center justify-center hidden backdrop-blur-sm">
-                                <i data-lucide="snowflake" class="w-16 h-16 text-blue-300"></i>
-                                <p class="text-2xl font-bold text-blue-200 ml-4">Card Frozen</p>
-                            </div>
-                        </div>
-
-                         <!-- Quick Actions -->
-                        <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                             <button class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
-                                <i data-lucide="plus-circle" class="w-6 h-6"></i>
-                                <span>Add Money</span>
-                             </button>
-                              <button class="nav-link btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2" data-target="card-control">
-                                <i data-lucide="shuffle" class="w-6 h-6"></i>
-                                <span>Rotate Card</span>
-                             </button>
-                             <button id="freeze-card-btn-quick" class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
-                                <i data-lucide="snowflake" class="w-6 h-6"></i>
-                                <span>Freeze Card</span>
-                             </button>
-                             <button class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
-                                <i data-lucide="send" class="w-6 h-6"></i>
-                                <span>Send</span>
-                             </button>
-                        </div>
-                    </div>
-
-                    <!-- AI Financial Advisor -->
-                    <div class="bg-slate-900/50 p-6 rounded-2xl flex flex-col">
-                        <h3 class="text-lg font-semibold mb-4">AI Financial Advisor</h3>
-                        <div class="flex items-start space-x-4">
-                            <div class="p-2 rounded-full" style="background-color: var(--color-primary); opacity: 0.2;">
-                                <i data-lucide="brain-circuit" class="w-6 h-6" style="color: var(--color-primary);"></i>
-                            </div>
-                            <div class="flex-1 bg-slate-700 p-4 rounded-lg">
-                                <p class="text-sm">You've spent 15% less on food this month. Great job! Consider moving the Rs 3,500 savings to your 'Vacation' vault to reach your goal faster.</p>
-                            </div>
-                        </div>
-                         <button class="btn-primary mt-auto py-2 px-4 rounded-lg w-full">Move Savings</button>
-                    </div>
-                </div>
-
-                <!-- Budget Jars -->
-                <div>
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-semibold">Budget Jars</h2>
-                        <button class="nav-link text-sm btn-secondary py-1 px-3 rounded-md" data-target="transactions">View History</button>
-                    </div>
-                    <div id="dashboard-budgets" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                       <!-- Populated by JS -->
-                    </div>
-                </div>
-
-                <!-- Savings Vaults -->
-                <div>
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-semibold">Savings Vaults</h2>
-                        <button class="nav-link text-sm btn-secondary py-1 px-3 rounded-md" data-target="transactions">View History</button>
-                    </div>
-                    <div id="dashboard-vaults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- Card Control Section -->
-            <section id="card-control" class="page-section hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                    <div>
-                        <h2 class="text-2xl font-semibold mb-4">Card Control</h2>
-                        <div id="smart-card-display-control" class="card-gradient p-6 rounded-2xl shadow-lg relative h-56">
-                             <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-sm text-slate-400">Active Account</p>
-                                    <h3 id="active-account-name-control" class="text-xl font-semibold">Current Account</h3>
-                                </div>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-white"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                            </div>
-                            <div class="absolute bottom-6 left-6">
-                                <p id="card-number-control" class="text-lg font-mono tracking-widest text-slate-300">**** **** **** 8021</p>
-                            </div>
-                            <div id="card-frozen-overlay-control" class="absolute inset-0 bg-black bg-opacity-60 rounded-2xl flex items-center justify-center hidden backdrop-blur-sm">
-                                <i data-lucide="snowflake" class="w-16 h-16 text-blue-300"></i>
-                                <p class="text-2xl font-bold text-blue-200 ml-4">Card Frozen</p>
-                            </div>
-                        </div>
-                         <div class="mt-6 flex items-center justify-between bg-slate-900/50 p-4 rounded-xl">
-                            <div class="flex items-center">
-                                <i data-lucide="snowflake" class="w-6 h-6 mr-3 text-blue-400"></i>
-                                <span class="font-medium">Freeze Card</span>
-                            </div>
-                            <label for="freeze-toggle" class="inline-flex relative items-center cursor-pointer">
-                                <input type="checkbox" value="" id="freeze-toggle" class="sr-only peer">
-                                <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                            </label>
-                        </div>
-                        <button id="locate-card-btn" class="mt-4 w-full btn-secondary p-3 rounded-lg flex items-center justify-center">
-                            <i data-lucide="map-pin" class="w-5 h-5 mr-2"></i>
-                            Locate Card
-                        </button>
-                    </div>
-
-                    <div class="bg-slate-900/50 p-6 rounded-2xl">
-                        <h3 class="text-lg font-semibold mb-4">Rotate Active Account</h3>
-                        <p class="text-sm text-slate-400 mb-6">Select which account or budget jar your physical card should use for the next transaction.</p>
-                        <div class="space-y-3" id="account-selector">
-                            <!-- Accounts will be populated by JS -->
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-             <!-- Budgets Section -->
-            <section id="budgets" class="page-section hidden space-y-8">
-                 <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 class="text-2xl font-semibold">My Budgets</h2>
-                        <p id="budget-count-text" class="text-sm text-slate-400 mt-1"></p>
-                    </div>
-                    <button id="new-budget-btn" class="btn-primary py-2 px-4 rounded-lg flex items-center">
-                        <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
-                        New Budget
-                    </button>
-                 </div>
-                 
-                 <!-- Budget Summary -->
-                <div class="bg-slate-900/50 p-6 rounded-2xl">
-                    <h3 class="font-semibold text-lg mb-4">Monthly Summary</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                        <div>
-                            <p class="text-sm text-slate-400">Total Budgeted</p>
-                            <p id="total-budgeted" class="text-2xl font-bold font-mono"></p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-slate-400">Total Spent</p>
-                            <p id="total-spent" class="text-2xl font-bold font-mono"></p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-slate-400">Remaining</p>
-                            <p id="total-remaining" class="text-2xl font-bold font-mono"></p>
-                        </div>
-                    </div>
-                </div>
-                 
-                 <div id="budgets-list" class="bg-slate-900/50 p-6 rounded-2xl space-y-6">
-                    <!-- Populated by JS -->
-                 </div>
-            </section>
-            
-            <!-- Vaults Section -->
-            <section id="vaults" class="page-section hidden">
-                 <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 class="text-2xl font-semibold">Savings Vaults</h2>
-                        <p class="text-sm text-slate-400 mt-1">Total Saved: <span id="total-saved-vaults-page" class="font-bold text-base"></span></p>
-                    </div>
-                    <button id="new-vault-btn" class="btn-primary py-2 px-4 rounded-lg flex items-center">
-                        <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
-                        New Vault
-                    </button>
-                 </div>
-                 <div id="vaults-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <!-- Populated by JS -->
-                 </div>
-            </section>
-            
-            <!-- Transactions Section -->
-            <section id="transactions" class="page-section hidden space-y-8">
-                <div>
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-semibold">Spending History</h2>
-                        <button id="export-spending-btn" class="btn-secondary py-2 px-4 rounded-lg flex items-center">
-                            <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2"></i>
-                            Export
-                        </button>
-                    </div>
-                    <div class="bg-slate-900/50 rounded-2xl overflow-hidden">
-                        <table class="w-full text-left">
-                            <thead class="bg-slate-800">
-                                <tr>
-                                    <th class="p-4 font-semibold">Date</th>
-                                    <th class="p-4 font-semibold">Description</th>
-                                    <th class="p-4 font-semibold">Category</th>
-                                    <th class="p-4 font-semibold text-right">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody id="transaction-list">
-                                <!-- Populated by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div>
-                    <h2 class="text-2xl font-semibold mb-6">Other History</h2>
-                     <div class="bg-slate-900/50 p-6 rounded-2xl">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <button id="show-vault-history-btn" class="w-full btn-secondary p-3 rounded-lg flex items-center justify-center">
-                                <i data-lucide="shield-check" class="w-5 h-5 mr-2"></i>
-                                View Vault History
-                            </button>
-                            <button id="show-budget-history-btn" class="w-full btn-secondary p-3 rounded-lg flex items-center justify-center">
-                                <i data-lucide="pie-chart" class="w-5 h-5 mr-2"></i>
-                                View Budget History
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="vault-history-container" class="hidden">
-                    <div class="flex justify-between items-center mb-6">
-                         <h2 class="text-2xl font-semibold">Vault History</h2>
-                         <button id="export-vault-history-btn" class="btn-secondary py-2 px-4 rounded-lg flex items-center">
-                            <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2"></i>
-                            Export
-                        </button>
-                    </div>
-                     <div class="bg-slate-900/50 p-6 rounded-2xl">
-                        <table class="w-full text-left">
-                           <thead class="border-b" style="border-color: var(--color-border);">
-                               <tr>
-                                   <th class="p-3 font-semibold">Date</th>
-                                   <th class="p-3 font-semibold">Action</th>
-                                   <th class="p-3 font-semibold">Details</th>
-                               </tr>
-                           </thead>
-                           <tbody id="vault-history-list">
-                               <!-- Populated by JS -->
-                           </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div id="budget-history-container" class="hidden">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-semibold">Budget History</h2>
-                         <button id="export-budget-history-btn" class="btn-secondary py-2 px-4 rounded-lg flex items-center">
-                            <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2"></i>
-                            Export
-                        </button>
-                    </div>
-                    <div class="bg-slate-900/50 p-6 rounded-2xl">
-                         <table class="w-full text-left">
-                           <thead class="border-b" style="border-color: var(--color-border);">
-                               <tr>
-                                   <th class="p-3 font-semibold">Date</th>
-                                   <th class="p-3 font-semibold">Action</th>
-                                   <th class="p-3 font-semibold">Details</th>
-                               </tr>
-                           </thead>
-                           <tbody id="budget-history-list">
-                               <!-- Populated by JS -->
-                           </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Settings Section -->
-            <section id="settings" class="page-section hidden space-y-8">
-                <div>
-                    <h2 class="text-2xl font-semibold mb-6">Settings</h2>
-                    <div class="bg-slate-900/50 p-6 rounded-2xl">
-                        <h3 class="text-lg font-semibold mb-4">Theme Customization</h3>
-                        <p class="text-sm text-slate-400 mb-6">Choose a color scheme for your dashboard.</p>
-                        <div id="theme-selector" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            <!-- Theme options will be generated by JS -->
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </main>
-
-    <!-- Mobile Sidebar -->
-    <div id="mobile-sidebar" class="fixed inset-0 bg-slate-900 z-40 transform -translate-x-full transition-transform duration-300 ease-in-out sm:hidden">
-         <aside class="w-64 flex-shrink-0 flex flex-col h-full">
-            <div class="flex items-center justify-between px-4 h-20 border-b border-slate-700">
-                <div class="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8" style="color: var(--color-primary)"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                    <h1 class="text-2xl font-bold ml-2">FinVault</h1>
-                </div>
-                <button id="close-mobile-menu" class="p-2">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
+    </div>
+    
+    <!-- Main App Container -->
+    <div id="app-container" class="flex h-screen overflow-hidden hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar w-16 md:w-64 flex-shrink-0 transition-all duration-300 ease-in-out hidden sm:flex flex-col">
+            <div class="flex items-center justify-center md:justify-start px-4 h-20 border-b" style="border-color: var(--color-border);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8" style="color: var(--color-primary)"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                <h1 class="text-2xl font-bold ml-2 hidden md:block">FinVault</h1>
             </div>
             <nav class="flex-1 px-2 py-4 space-y-2">
                 <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg bg-slate-700" data-target="dashboard">
-                    <i data-lucide="layout-dashboard" class="w-6 h-6"></i><span class="ml-3">Dashboard</span>
+                    <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+                    <span class="ml-3 hidden md:block">Dashboard</span>
                 </a>
                 <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="card-control">
-                    <i data-lucide="credit-card" class="w-6 h-6"></i><span class="ml-3">Card Control</span>
+                    <i data-lucide="credit-card" class="w-6 h-6"></i>
+                    <span class="ml-3 hidden md:block">Card Control</span>
                 </a>
                 <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="budgets">
-                    <i data-lucide="pie-chart" class="w-6 h-6"></i><span class="ml-3">Budgets</span>
+                    <i data-lucide="pie-chart" class="w-6 h-6"></i>
+                    <span class="ml-3 hidden md:block">Budgets</span>
                 </a>
                 <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="vaults">
-                    <i data-lucide="shield-check" class="w-6 h-6"></i><span class="ml-3">Vaults</span>
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                    <span class="ml-3 hidden md:block">Vaults</span>
                 </a>
-                <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="transactions">
-                    <i data-lucide="list" class="w-6 h-6"></i><span class="ml-3">Transactions</span>
+                 <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="transactions">
+                    <i data-lucide="list" class="w-6 h-6"></i>
+                    <span class="ml-3 hidden md:block">Transactions</span>
                 </a>
-                 <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="settings">
-                    <i data-lucide="settings" class="w-6 h-6"></i><span class="ml-3">Settings</span>
+                <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="settings">
+                    <i data-lucide="settings" class="w-6 h-6"></i>
+                    <span class="ml-3 hidden md:block">Settings</span>
                 </a>
             </nav>
+            <div class="px-2 py-4 mt-auto border-t" style="border-color: var(--color-border);">
+                 <div class="relative">
+                    <button id="profile-btn" class="flex items-center w-full p-2 text-base font-normal rounded-lg hover:bg-slate-700">
+                        <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" class="w-8 h-8 rounded-full" alt="User Avatar">
+                        <span id="user-name" class="ml-3 hidden md:block">John Doe</span>
+                    </button>
+                    <div id="profile-dropdown" class="absolute bottom-full left-0 mb-2 w-full bg-slate-700 rounded-lg shadow-lg hidden">
+                        <a href="#" id="logout-btn" class="flex items-center w-full p-3 text-sm hover:bg-slate-600 rounded-lg">
+                            <i data-lucide="log-out" class="w-4 h-4 mr-2"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </aside>
-    </div>
 
-    <!-- Modals -->
-    <div id="map-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-2xl text-center">
-            <h3 class="text-xl font-semibold mb-4">Locating Your Card...</h3>
-            <div class="aspect-video bg-slate-700 rounded-md flex items-center justify-center">
-                <p></p>
-                <i data-lucide="map" class="w-24 h-24 text-slate-500"></i>
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="flex items-center justify-between h-20 px-6 border-b bg-slate-800" style="border-color: var(--color-border);">
+                 <div class="sm:hidden">
+                     <button id="mobile-menu-button" class="p-2 rounded-md">
+                         <i data-lucide="menu" class="w-6 h-6"></i>
+                     </button>
+                 </div>
+                 <h1 class="text-xl font-semibold" id="page-title">Dashboard</h1>
+                 <div class="flex items-center space-x-4 relative">
+                     <button id="notifications-btn" class="p-2 rounded-full hover:bg-slate-700 relative">
+                         <i data-lucide="bell" class="w-6 h-6"></i>
+                         <span id="notification-dot" class="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500"></span>
+                     </button>
+                     <div id="notifications-dropdown" class="absolute top-full right-0 mt-2 w-80 bg-slate-700 rounded-lg shadow-lg hidden z-10">
+                        <div class="p-3 border-b border-slate-600">
+                            <h4 class="font-semibold">Notifications</h4>
+                        </div>
+                        <div id="notification-list" class="max-h-96 overflow-y-auto">
+                            <!-- Notifications will be populated by JS -->
+                        </div>
+                     </div>
+                 </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-6 md:p-8 space-y-8" id="main-content-area">
+
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="page-section space-y-8">
+                    <!-- Card and AI Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2">
+                             <!-- Premium Smart Card -->
+                            <div id="smart-card-display" class="card-gradient p-6 rounded-2xl shadow-lg relative h-56 transition-all duration-300">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-sm text-slate-400">Active Account</p>
+                                        <h3 id="active-account-name" class="text-xl font-semibold">Current Account</h3>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-white"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-6 left-6">
+                                     <p class="text-sm text-slate-400">Total Balance</p>
+                                    <p id="card-balance" class="text-3xl font-bold">Rs 124,530.50</p>
+                                    <p id="card-number" class="text-lg font-mono tracking-widest mt-2 text-slate-300">**** **** **** 8021</p>
+                                </div>
+                                <div id="card-frozen-overlay" class="absolute inset-0 bg-black bg-opacity-60 rounded-2xl flex items-center justify-center hidden backdrop-blur-sm">
+                                    <i data-lucide="snowflake" class="w-16 h-16 text-blue-300"></i>
+                                    <p class="text-2xl font-bold text-blue-200 ml-4">Card Frozen</p>
+                                </div>
+                            </div>
+
+                             <!-- Quick Actions -->
+                            <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                 <button id="add-money-btn" class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
+                                    <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                                    <span>Add Money</span>
+                                 </button>
+                                  <button class="nav-link btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2" data-target="card-control">
+                                    <i data-lucide="shuffle" class="w-6 h-6"></i>
+                                    <span>Rotate Card</span>
+                                 </button>
+                                 <button id="send-money-btn" class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
+                                    <i data-lucide="send" class="w-6 h-6"></i>
+                                    <span>Send</span>
+                                 </button>
+                                  <button id="qr-pay-btn" class="btn-secondary p-4 rounded-lg flex flex-col items-center justify-center space-y-2">
+                                    <i data-lucide="qr-code" class="w-6 h-6"></i>
+                                    <span>Pay with QR</span>
+                                 </button>
+                            </div>
+                        </div>
+
+                        <!-- AI Financial Advisor -->
+                        <div class="bg-slate-900/50 p-6 rounded-2xl flex flex-col">
+                            <div class="flex justify-between items-center mb-4">
+                                 <h3 class="text-lg font-semibold">AI Financial Advisor</h3>
+                                 <button id="new-advice-btn" class="p-1 rounded-full hover:bg-slate-700"><i data-lucide="refresh-cw" class="w-4 h-4 text-slate-400"></i></button>
+                            </div>
+                            <div class="flex items-start space-x-4">
+                                <div class="p-2 rounded-full" style="background-color: var(--color-primary); opacity: 0.2;">
+                                    <i data-lucide="brain-circuit" class="w-6 h-6" style="color: var(--color-primary);"></i>
+                                </div>
+                                <div id="ai-advice-content" class="flex-1 bg-slate-700 p-4 rounded-lg">
+                                    <!-- AI Advice populated by JS -->
+                                </div>
+                            </div>
+                             <button id="ai-action-btn" class="btn-primary mt-auto py-2 px-4 rounded-lg w-full">Move Savings</button>
+                        </div>
+                    </div>
+
+                    <!-- Budget Jars -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-semibold">Budget Jars</h2>
+                            <button class="nav-link text-sm btn-secondary py-1 px-3 rounded-md" data-target="transactions">View History</button>
+                        </div>
+                        <div id="dashboard-budgets" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                           <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Savings Vaults -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-semibold">Savings Vaults</h2>
+                            <button class="nav-link text-sm btn-secondary py-1 px-3 rounded-md" data-target="transactions">View History</button>
+                        </div>
+                        <div id="dashboard-vaults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Card Control Section -->
+                <section id="card-control" class="page-section hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                        <div>
+                            <h2 class="text-2xl font-semibold mb-4">Card Control</h2>
+                            <div id="smart-card-display-control" class="card-gradient p-6 rounded-2xl shadow-lg relative h-56">
+                                 <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-sm text-slate-400">Active Account</p>
+                                        <h3 id="active-account-name-control" class="text-xl font-semibold">Current Account</h3>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-white"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                                </div>
+                                <div class="absolute bottom-6 left-6">
+                                    <p id="card-number-control" class="text-lg font-mono tracking-widest text-slate-300">**** **** **** 8021</p>
+                                </div>
+                                <div id="card-frozen-overlay-control" class="absolute inset-0 bg-black bg-opacity-60 rounded-2xl flex items-center justify-center hidden backdrop-blur-sm">
+                                    <i data-lucide="snowflake" class="w-16 h-16 text-blue-300"></i>
+                                    <p class="text-2xl font-bold text-blue-200 ml-4">Card Frozen</p>
+                                </div>
+                            </div>
+                             <div class="mt-6 flex items-center justify-between bg-slate-900/50 p-4 rounded-xl">
+                                <div class="flex items-center">
+                                    <i data-lucide="snowflake" class="w-6 h-6 mr-3 text-blue-400"></i>
+                                    <span class="font-medium">Freeze Card</span>
+                                </div>
+                                <label for="freeze-toggle" class="inline-flex relative items-center cursor-pointer">
+                                    <input type="checkbox" value="" id="freeze-toggle" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/50 p-6 rounded-2xl">
+                            <h3 class="text-lg font-semibold mb-4">Rotate Active Account</h3>
+                            <p class="text-sm text-slate-400 mb-6">Select which account or budget jar your physical card should use for the next transaction.</p>
+                            <div class="space-y-3" id="account-selector">
+                                <!-- Accounts will be populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                 <!-- Budgets Section -->
+                <section id="budgets" class="page-section hidden space-y-8">
+                     <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl font-semibold">My Budgets</h2>
+                            <p id="budget-count-text" class="text-sm text-slate-400 mt-1"></p>
+                        </div>
+                        <button id="new-budget-btn" class="btn-primary py-2 px-4 rounded-lg flex items-center">
+                            <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
+                            New Budget
+                        </button>
+                     </div>
+                     
+                     <!-- Budget Summary -->
+                    <div class="bg-slate-900/50 p-6 rounded-2xl">
+                        <h3 class="font-semibold text-lg mb-4">Monthly Summary</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                            <div>
+                                <p class="text-sm text-slate-400">Total Budgeted</p>
+                                <p id="total-budgeted" class="text-2xl font-bold font-mono"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-400">Total Spent</p>
+                                <p id="total-spent" class="text-2xl font-bold font-mono"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-400">Remaining</p>
+                                <p id="total-remaining" class="text-2xl font-bold font-mono"></p>
+                            </div>
+                        </div>
+                    </div>
+                     
+                     <div id="budgets-list" class="bg-slate-900/50 p-6 rounded-2xl space-y-6">
+                        <!-- Populated by JS -->
+                     </div>
+                </section>
+                
+                <!-- Vaults Section -->
+                <section id="vaults" class="page-section hidden">
+                     <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl font-semibold">Savings Vaults</h2>
+                            <p class="text-sm text-slate-400 mt-1">Total Saved: <span id="total-saved-vaults-page" class="font-bold text-base"></span></p>
+                        </div>
+                     </div>
+                     <div id="savings-account-container" class="mb-8">
+                        <!-- Savings Account Rendered here -->
+                     </div>
+                     <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">Goal Vaults</h3>
+                        <button id="new-vault-btn" class="btn-primary py-2 px-4 rounded-lg flex items-center">
+                            <i data-lucide="plus" class="w-5 h-5 mr-2"></i>
+                            New Vault
+                        </button>
+                     </div>
+                     <div id="vaults-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <!-- Populated by JS -->
+                     </div>
+                </section>
+                
+                <!-- Transactions Section -->
+                <section id="transactions" class="page-section hidden space-y-8">
+                    <div>
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-semibold">Spending History</h2>
+                            <button id="export-spending-btn" class="btn-secondary py-2 px-4 rounded-lg flex items-center">
+                                <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2"></i>
+                                Export
+                            </button>
+                        </div>
+                        <div class="bg-slate-900/50 rounded-2xl overflow-hidden">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-800">
+                                    <tr>
+                                        <th class="p-4 font-semibold">Date</th>
+                                        <th class="p-4 font-semibold">Description</th>
+                                        <th class="p-4 font-semibold">Category</th>
+                                        <th class="p-4 font-semibold text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transaction-list">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-6">Other History</h2>
+                         <div class="bg-slate-900/50 p-6 rounded-2xl">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                 <button id="show-savings-history-btn" class="w-full btn-secondary p-3 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="piggy-bank" class="w-5 h-5 mr-2"></i>
+                                    View Savings History
+                                </button>
+                                <button id="show-vault-history-btn" class="w-full btn-secondary p-3 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="shield-check" class="w-5 h-5 mr-2"></i>
+                                    View Goal Vault History
+                                </button>
+                                <button id="show-budget-history-btn" class="w-full btn-secondary p-3 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="pie-chart" class="w-5 h-5 mr-2"></i>
+                                    View Budget History
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="savings-history-container" class="hidden">
+                        <div class="flex justify-between items-center mb-6">
+                             <h2 class="text-2xl font-semibold">Savings Account History</h2>
+                             <button id="export-savings-history-btn" class="btn-secondary py-2 px-4 rounded-lg flex items-center">
+                                <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2"></i>
+                                Export
+                            </button>
+                        </div>
+                         <div class="bg-slate-900/50 p-6 rounded-2xl">
+                            <table class="w-full text-left">
+                               <thead class="border-b" style="border-color: var(--color-border);">
+                                   <tr>
+                                       <th class="p-3 font-semibold">Date</th>
+                                       <th class="p-3 font-semibold">Action</th>
+                                       <th class="p-3 font-semibold">Details</th>
+                                       <th class="p-3 font-semibold text-right">Amount</th>
+                                   </tr>
+                               </thead>
+                               <tbody id="savings-history-list">
+                                   <!-- Populated by JS -->
+                               </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="vault-history-container" class="hidden">
+                        <div class="flex justify-between items-center mb-6">
+                             <h2 class="text-2xl font-semibold">Goal Vault History</h2>
+                             <button id="export-vault-history-btn" class="btn-secondary py-2 px-4 rounded-lg flex items-center">
+                                <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2"></i>
+                                Export
+                            </button>
+                        </div>
+                         <div class="bg-slate-900/50 p-6 rounded-2xl">
+                            <table class="w-full text-left">
+                               <thead class="border-b" style="border-color: var(--color-border);">
+                                   <tr>
+                                       <th class="p-3 font-semibold">Date</th>
+                                       <th class="p-3 font-semibold">Action</th>
+                                       <th class="p-3 font-semibold">Details</th>
+                                   </tr>
+                               </thead>
+                               <tbody id="vault-history-list">
+                                   <!-- Populated by JS -->
+                               </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div id="budget-history-container" class="hidden">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-semibold">Budget History</h2>
+                             <button id="export-budget-history-btn" class="btn-secondary py-2 px-4 rounded-lg flex items-center">
+                                <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2"></i>
+                                Export
+                            </button>
+                        </div>
+                        <div class="bg-slate-900/50 p-6 rounded-2xl">
+                             <table class="w-full text-left">
+                               <thead class="border-b" style="border-color: var(--color-border);">
+                                   <tr>
+                                       <th class="p-3 font-semibold">Date</th>
+                                       <th class="p-3 font-semibold">Action</th>
+                                       <th class="p-3 font-semibold">Details</th>
+                                   </tr>
+                               </thead>
+                               <tbody id="budget-history-list">
+                                   <!-- Populated by JS -->
+                               </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Settings Section -->
+                <section id="settings" class="page-section hidden space-y-8">
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-6">Settings</h2>
+                        <div class="bg-slate-900/50 p-6 rounded-2xl">
+                            <h3 class="text-lg font-semibold mb-4">Theme Customization</h3>
+                            <p class="text-sm text-slate-400 mb-6">Choose a color scheme for your dashboard.</p>
+                            <div id="theme-selector" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                <!-- Theme options will be generated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                     <div>
+                        <div class="bg-slate-900/50 p-6 rounded-2xl">
+                            <h3 class="text-lg font-semibold mb-4">Card Security</h3>
+                            <p class="text-sm text-slate-400 mb-6">Find your card's last known location.</p>
+                            <button id="locate-card-btn-settings" class="btn-secondary py-2 px-4 rounded-lg flex items-center">
+                                <i data-lucide="map-pin" class="w-5 h-5 mr-2"></i>
+                                Locate My Card
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="bg-slate-900/50 p-6 rounded-2xl">
+                            <h3 class="text-lg font-semibold mb-4">Simulation Controls</h3>
+                            <p class="text-sm text-slate-400 mb-6">Advance time to see features like monthly returns.</p>
+                            <button id="simulate-payout-btn" class="btn-primary py-2 px-4 rounded-lg">Simulate Monthly Payout</button>
+                        </div>
+                    </div>
+                </section>
             </div>
-            <p class="mt-4 text-slate-400">Last seen: 2 minutes ago at Tariq Road, Karachi</p>
-            <button id="close-map-modal" class="mt-6 btn-primary py-2 px-6 rounded-lg">Close</button>
-        </div>
-    </div>
-    
-    <div id="new-vault-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
-            <h3 class="text-xl font-semibold mb-4">Create New Vault</h3>
-            <form id="new-vault-form" class="space-y-4">
-                <div>
-                    <label for="vault-name" class="block text-sm font-medium text-slate-300 mb-1">Vault Name</label>
-                    <input type="text" id="vault-name" name="vault-name" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" placeholder="e.g., Vacation Trip" required>
-                </div>
-                <div>
-                    <label for="vault-target" class="block text-sm font-medium text-slate-300 mb-1">Target Amount</label>
-                    <input type="number" id="vault-target" name="vault-target" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" placeholder="e.g., 200000" required>
-                </div>
-                <div class="flex justify-end gap-4 pt-4">
-                    <button type="button" class="btn-secondary py-2 px-4 rounded-lg" data-action="close">Cancel</button>
-                    <button type="submit" class="btn-primary py-2 px-4 rounded-lg">Create Vault</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <div id="new-budget-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
-            <h3 class="text-xl font-semibold mb-4">Create New Budget</h3>
-            <form id="new-budget-form" class="space-y-4">
-                <div>
-                    <label for="budget-name" class="block text-sm font-medium text-slate-300 mb-1">Budget Name</label>
-                    <input type="text" id="budget-name" name="budget-name" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" placeholder="e.g., Groceries" required>
-                </div>
-                <div>
-                    <label for="budget-limit" class="block text-sm font-medium text-slate-300 mb-1">Monthly Limit</label>
-                    <input type="number" id="budget-limit" name="budget-limit" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" placeholder="e.g., 25000" required>
-                </div>
-                <div class="flex justify-end gap-4 pt-4">
-                    <button type="button" class="btn-secondary py-2 px-4 rounded-lg" data-action="close">Cancel</button>
-                    <button type="submit" class="btn-primary py-2 px-4 rounded-lg">Create Budget</button>
-                </div>
-            </form>
-        </div>
-    </div>
+        </main>
 
-    <div id="update-budget-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
-            <h3 class="text-xl font-semibold mb-4">Update Budget</h3>
-            <form id="update-budget-form" class="space-y-4">
-                <input type="hidden" id="update-budget-id" name="update-budget-id">
-                <div>
-                    <label for="update-budget-name" class="block text-sm font-medium text-slate-300 mb-1">Budget Name</label>
-                    <input type="text" id="update-budget-name" name="update-budget-name" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" required>
+        <!-- Mobile Sidebar -->
+        <div id="mobile-sidebar" class="fixed inset-0 bg-slate-900 z-40 transform -translate-x-full transition-transform duration-300 ease-in-out sm:hidden">
+             <aside class="w-64 flex-shrink-0 flex flex-col h-full">
+                <div class="flex items-center justify-between px-4 h-20 border-b border-slate-700">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8" style="color: var(--color-primary)"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                        <h1 class="text-2xl font-bold ml-2">FinVault</h1>
+                    </div>
+                    <button id="close-mobile-menu" class="p-2">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
                 </div>
-                <div>
-                    <label for="update-budget-limit" class="block text-sm font-medium text-slate-300 mb-1">Monthly Limit</label>
-                    <input type="number" id="update-budget-limit" name="update-budget-limit" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" required>
-                </div>
-                <div class="flex justify-end gap-4 pt-4">
-                    <button type="button" class="btn-secondary py-2 px-4 rounded-lg" data-action="close">Cancel</button>
-                    <button type="submit" class="btn-primary py-2 px-4 rounded-lg">Update Budget</button>
-                </div>
-            </form>
+                <nav class="flex-1 px-2 py-4 space-y-2">
+                    <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg bg-slate-700" data-target="dashboard">
+                        <i data-lucide="layout-dashboard" class="w-6 h-6"></i><span class="ml-3">Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="card-control">
+                        <i data-lucide="credit-card" class="w-6 h-6"></i><span class="ml-3">Card Control</span>
+                    </a>
+                    <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="budgets">
+                        <i data-lucide="pie-chart" class="w-6 h-6"></i><span class="ml-3">Budgets</span>
+                    </a>
+                    <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="vaults">
+                        <i data-lucide="shield-check" class="w-6 h-6"></i><span class="ml-3">Vaults</span>
+                    </a>
+                    <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="transactions">
+                        <i data-lucide="list" class="w-6 h-6"></i><span class="ml-3">Transactions</span>
+                    </a>
+                     <a href="#" class="nav-link flex items-center p-2 text-base font-normal rounded-lg hover:bg-slate-700" data-target="settings">
+                        <i data-lucide="settings" class="w-6 h-6"></i><span class="ml-3">Settings</span>
+                    </a>
+                </nav>
+            </aside>
         </div>
-    </div>
 
-    <div id="vault-action-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
-            <h3 id="vault-action-title" class="text-xl font-semibold mb-4">Vault Action</h3>
-            <form id="vault-action-form" class="space-y-4">
-                <input type="hidden" id="vault-action-id" name="vault-action-id">
-                <input type="hidden" id="vault-action-type" name="vault-action-type">
-                <div>
-                    <label for="vault-action-amount" class="block text-sm font-medium text-slate-300 mb-1">Amount</label>
-                    <input type="number" id="vault-action-amount" name="vault-action-amount" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" placeholder="e.g., 5000" required>
-                </div>
-                <div class="flex justify-end gap-4 pt-4">
-                    <button type="button" class="btn-secondary py-2 px-4 rounded-lg" data-action="close">Cancel</button>
-                    <button type="submit" id="vault-action-submit" class="btn-primary py-2 px-4 rounded-lg">Confirm</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="confirm-delete-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md text-center">
-            <i data-lucide="alert-triangle" class="w-12 h-12 text-red-500 mx-auto mb-4"></i>
-            <h3 id="confirm-delete-title" class="text-xl font-semibold mb-2">Are you sure?</h3>
-            <p id="confirm-delete-message" class="text-slate-400 mb-6">This action cannot be undone.</p>
-            <div class="flex justify-center gap-4">
-                <button type="button" class="btn-secondary py-2 px-6 rounded-lg" data-action="close">Cancel</button>
-                <button type="button" id="confirm-delete-btn" class="btn-danger py-2 px-6 rounded-lg">Delete</button>
+        <!-- Modals -->
+        <div id="onboarding-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50 p-4">
+            <div class="bg-slate-800 rounded-lg p-6 w-full max-w-md text-center">
+                 <div id="onboarding-step-1">
+                    <i data-lucide="gem" class="w-12 h-12 text-green-400 mx-auto mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">Welcome to FinVault!</h3>
+                    <p class="text-slate-400 mb-6">Your all-in-one financial command center. Let's take a quick tour.</p>
+                    <button class="onboarding-next btn-primary py-2 px-6 rounded-lg w-full">Next</button>
+                 </div>
+                 <div id="onboarding-step-2" class="hidden">
+                     <i data-lucide="pie-chart" class="w-12 h-12 text-sky-400 mx-auto mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">Create Budget Jars</h3>
+                    <p class="text-slate-400 mb-6">Separate your money into categories like 'Food' or 'Shopping' to track your spending easily.</p>
+                    <div class="flex gap-4">
+                        <button class="onboarding-prev btn-secondary py-2 px-6 rounded-lg w-1/2">Previous</button>
+                        <button class="onboarding-next btn-primary py-2 px-6 rounded-lg w-1/2">Next</button>
+                    </div>
+                 </div>
+                 <div id="onboarding-step-3" class="hidden">
+                    <i data-lucide="credit-card" class="w-12 h-12 text-amber-400 mx-auto mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">The Universal Card</h3>
+                    <p class="text-slate-400 mb-6">Assign any Budget Jar to your physical card to spend directly from it. You're always in control.</p>
+                     <div class="flex gap-4">
+                        <button class="onboarding-prev btn-secondary py-2 px-6 rounded-lg w-1/2">Previous</button>
+                        <button class="onboarding-finish btn-primary py-2 px-6 rounded-lg w-1/2">Let's Get Started!</button>
+                    </div>
+                 </div>
             </div>
+        </div>
+        
+        <div id="qr-scanner-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50 p-4">
+            <div class="bg-slate-800 rounded-lg p-6 w-full max-w-sm text-center">
+                <h3 class="text-xl font-semibold mb-4">Scan to Pay</h3>
+                <div class="relative w-64 h-64 mx-auto bg-slate-900 rounded-lg overflow-hidden border-2 border-slate-600">
+                    <div class="absolute inset-0 bg-grid-slate-700/20"></div>
+                    <div class="qr-scanner-line"></div>
+                </div>
+                <p class="mt-4 text-slate-400 text-sm">Hold your camera up to a QR code</p>
+                <button class="mt-6 btn-secondary py-2 px-6 rounded-lg" data-action="close">Cancel</button>
+            </div>
+        </div>
+
+        <div id="map-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-2xl text-center">
+                <h3 class="text-xl font-semibold mb-4">Locating Your Card...</h3>
+                <div class="aspect-video bg-slate-700 rounded-md flex items-center justify-center">
+                    <p></p>
+                    <i data-lucide="map" class="w-24 h-24 text-slate-500"></i>
+                </div>
+                <p class="mt-4 text-slate-400">Last seen: 2 minutes ago at Tariq Road, Karachi</p>
+                <button id="close-map-modal" class="mt-6 btn-primary py-2 px-6 rounded-lg">Close</button>
+            </div>
+        </div>
+        
+        <div id="add-money-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
+                <h3 class="text-xl font-semibold mb-4">Add Money to Current Account</h3>
+                <form id="add-money-form" class="space-y-4">
+                    <div>
+                        <label for="add-money-amount" class="block text-sm font-medium text-slate-300 mb-1">Amount</label>
+                        <input type="number" id="add-money-amount" name="add-money-amount" class="w-full bg-slate-700 border-slate-600 rounded-md p-2" placeholder="e.g., 10000" required>
+                    </div>
+                    <div>
+                        <label for="add-money-source" class="block text-sm font-medium text-slate-300 mb-1">Source</label>
+                        <select id="add-money-source" name="add-money-source" class="w-full bg-slate-700 border-slate-600 rounded-md p-2">
+                            <option>Linked Bank Account (**** 1234)</option>
+                            <option>Debit Card (**** 5678)</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-4 pt-4">
+                        <button type="button" class="btn-secondary py-2 px-4 rounded-lg" data-action="close">Cancel</button>
+                        <button type="submit" class="btn-primary py-2 px-4 rounded-lg">Add Money</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div id="send-money-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
+                <h3 class="text-xl font-semibold mb-4">Send Money</h3>
+                <form id="send-money-form" class="space-y-4">
+                     <div>
+                        <label for="send-money-recipient" class="block text-sm font-medium text-slate-300 mb-1">Recipient Account/IBAN</label>
+                        <input type="text" id="send-money-recipient" name="send-money-recipient" class="w-full bg-slate-700 border-slate-600 rounded-md p-2" placeholder="e.g., PK36SCBL0000001123456789" required>
+                    </div>
+                    <div>
+                        <label for="send-money-amount" class="block text-sm font-medium text-slate-300 mb-1">Amount</label>
+                        <input type="number" id="send-money-amount" name="send-money-amount" class="w-full bg-slate-700 border-slate-600 rounded-md p-2" placeholder="e.g., 2500" required>
+                    </div>
+                    <div>
+                        <label for="send-money-service" class="block text-sm font-medium text-slate-300 mb-1">Service</label>
+                        <select id="send-money-service" name="send-money-service" class="w-full bg-slate-700 border-slate-600 rounded-md p-2">
+                            <option>Bank Transfer</option>
+                            <option>JazzCash</option>
+                            <option>Easypaisa</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-4 pt-4">
+                        <button type="button" class="btn-secondary py-2 px-4 rounded-lg" data-action="close">Cancel</button>
+                        <button type="submit" class="btn-primary py-2 px-4 rounded-lg">Send Money</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="new-vault-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
+                <h3 class="text-xl font-semibold mb-4">Create New Vault</h3>
+                <form id="new-vault-form" class="space-y-4">
+                    <div>
+                        <label for="vault-name" class="block text-sm font-medium text-slate-300 mb-1">Vault Name</label>
+                        <input type="text" id="vault-name" name="vault-name" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" placeholder="e.g., Vacation Trip" required>
+                    </div>
+                    <div>
+                        <label for="vault-target" class="block text-sm font-medium text-slate-300 mb-1">Target Amount</label>
+                        <input type="number" id="vault-target" name="vault-target" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" placeholder="e.g., 200000" required>
+                    </div>
+                    <div class="flex justify-end gap-4 pt-4">
+                        <button type="button" class="btn-secondary py-2 px-4 rounded-lg" data-action="close">Cancel</button>
+                        <button type="submit" class="btn-primary py-2 px-4 rounded-lg">Create Vault</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div id="new-budget-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
+                <h3 class="text-xl font-semibold mb-4">Create New Budget</h3>
+                <form id="new-budget-form" class="space-y-4">
+                    <div>
+                        <label for="budget-name" class="block text-sm font-medium text-slate-300 mb-1">Budget Name</label>
+                        <input type="text" id="budget-name" name="budget-name" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" placeholder="e.g., Groceries" required>
+                    </div>
+                    <div>
+                        <label for="budget-limit" class="block text-sm font-medium text-slate-300 mb-1">Monthly Limit</label>
+                        <input type="number" id="budget-limit" name="budget-limit" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" placeholder="e.g., 25000" required>
+                    </div>
+                    <div class="flex justify-end gap-4 pt-4">
+                        <button type="button" class="btn-secondary py-2 px-4 rounded-lg" data-action="close">Cancel</button>
+                        <button type="submit" class="btn-primary py-2 px-4 rounded-lg">Create Budget</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="update-budget-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
+                <h3 class="text-xl font-semibold mb-4">Update Budget</h3>
+                <form id="update-budget-form" class="space-y-4">
+                    <input type="hidden" id="update-budget-id" name="update-budget-id">
+                    <div>
+                        <label for="update-budget-name" class="block text-sm font-medium text-slate-300 mb-1">Budget Name</label>
+                        <input type="text" id="update-budget-name" name="update-budget-name" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" required>
+                    </div>
+                    <div>
+                        <label for="update-budget-limit" class="block text-sm font-medium text-slate-300 mb-1">Monthly Limit</label>
+                        <input type="number" id="update-budget-limit" name="update-budget-limit" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" required>
+                    </div>
+                    <div class="flex justify-end gap-4 pt-4">
+                        <button type="button" class="btn-secondary py-2 px-4 rounded-lg" data-action="close">Cancel</button>
+                        <button type="submit" class="btn-primary py-2 px-4 rounded-lg">Update Budget</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="vault-action-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md">
+                <h3 id="vault-action-title" class="text-xl font-semibold mb-4">Vault Action</h3>
+                <form id="vault-action-form" class="space-y-4">
+                    <input type="hidden" id="vault-action-id" name="vault-action-id">
+                    <input type="hidden" id="vault-action-type" name="vault-action-type">
+                    <div>
+                        <label for="vault-action-amount" class="block text-sm font-medium text-slate-300 mb-1">Amount</label>
+                        <input type="number" id="vault-action-amount" name="vault-action-amount" class="w-full bg-slate-700 border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-green-500" placeholder="e.g., 5000" required>
+                    </div>
+                    <div class="flex justify-end gap-4 pt-4">
+                        <button type="button" class="btn-secondary py-2 px-4 rounded-lg" data-action="close">Cancel</button>
+                        <button type="submit" id="vault-action-submit" class="btn-primary py-2 px-4 rounded-lg">Confirm</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="confirm-delete-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="bg-slate-800 rounded-lg p-6 w-11/12 max-w-md text-center">
+                <i data-lucide="alert-triangle" class="w-12 h-12 text-red-500 mx-auto mb-4"></i>
+                <h3 id="confirm-delete-title" class="text-xl font-semibold mb-2">Are you sure?</h3>
+                <p id="confirm-delete-message" class="text-slate-400 mb-6">This action cannot be undone.</p>
+                <div class="flex justify-center gap-4">
+                    <button type="button" class="btn-secondary py-2 px-6 rounded-lg" data-action="close">Cancel</button>
+                    <button type="button" id="confirm-delete-btn" class="btn-danger py-2 px-6 rounded-lg">Delete</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="toast-notification" class="fixed bottom-8 right-8 bg-green-600 text-white py-3 px-6 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 ease-in-out z-50">
+            <p id="toast-message"></p>
         </div>
     </div>
 
 
 <script>
-    lucide.createIcons();
+(function() { // IIFE Start
+    "use strict";
 
     // --- MOCK DATA & CONFIG ---
     const MAX_BUDGETS = 5;
     const MAX_CARD_ASSIGNMENTS = 3;
+
+    let currentUser = null;
 
     let accounts = [
         { id: 'current', name: 'Current Account', balance: 124530.50, type: 'account' },
@@ -602,11 +839,16 @@
     ];
 
     let vaultsData = [
+        { id: 'savings-account', name: 'Savings Account', current: 500000, target: null, icon: 'piggy-bank', color: 'green', isSavingsAccount: true, returnRate: 0.10 },
         { id: 'emergency', name: 'Emergency Fund', current: 85000, target: 100000, icon: 'shield', color: 'indigo' },
         { id: 'laptop', name: 'New Laptop', current: 60000, target: 150000, icon: 'briefcase', color: 'cyan' },
         { id: 'vacation', name: 'Vacation Trip', current: 130000, target: 200000, icon: 'plane', color: 'fuchsia' },
     ];
     
+    let savingsAccountHistoryData = [
+        { date: 'Aug 1, 2025', action: 'Deposit', details: 'Initial Deposit', amount: 500000 },
+    ];
+
     let vaultHistoryData = [
         { date: 'Aug 20, 2025', action: 'Created', details: 'Emergency Fund (Target: Rs 100,000)'},
         { date: 'Aug 25, 2025', action: 'Created', details: 'New Laptop (Target: Rs 150,000)'},
@@ -619,7 +861,7 @@
         { date: 'Sep 1, 2025', action: 'Archived', details: 'August Shopping Budget'},
     ];
     
-    const transactionsData = [
+    let transactionsData = [
         { date: 'Sep 1, 2025', desc: 'Netflix Subscription', cat: 'Entertainment', amount: -1200.00 },
         { date: 'Sep 1, 2025', desc: 'Foodpanda Order', cat: 'Food', amount: -2550.00 },
         { date: 'Aug 31, 2025', desc: 'Daraz Online Shopping', cat: 'Shopping', amount: -5400.00 },
@@ -627,18 +869,42 @@
         { date: 'Aug 29, 2025', desc: 'Careem Ride', cat: 'Transport', amount: -850.00 },
     ];
 
+    const aiAdvicePool = [
+        { text: "You've spent 15% less on food this month. Great job! Consider moving the Rs 3,500 savings to your 'Vacation' vault to reach your goal faster.", action: 'move', amount: 3500, targetVault: 'vacation' },
+        { text: "Your 'Shopping' budget is 52% utilized. Keep an eye on non-essential spending for the rest of the month.", action: 'none' },
+        { text: "You've saved Rs 85,000 in your 'Emergency Fund'. You're 85% of the way to your goal!", action: 'none' },
+        { text: "Your transport spending is higher than last month. Could you try public transport twice a week to save around Rs 1,500?", action: 'none' },
+        { text: "You have Rs 7,660 remaining in your 'Food' budget. That's enough for a nice dinner out!", action: 'none' }
+    ];
+
+    const notificationsData = [
+        { text: "Your 'Food' budget is 85% used.", time: "1h ago", icon: "pie-chart" },
+        { text: "Monthly interest has been paid to your Savings Account.", time: "3h ago", icon: "piggy-bank" },
+        { text: "Transaction of Rs 2,550 to Foodpanda was successful.", time: "1d ago", icon: "receipt" }
+    ];
+    
+    let currentAdviceIndex = 0;
     let activeAccountId = 'current';
     let isCardFrozen = false;
     let itemToDelete = { id: null, type: null };
 
     // --- DOM ELEMENTS ---
+    const authContainer = document.getElementById('auth-container');
+    const appContainer = document.getElementById('app-container');
+    const loginScreen = document.getElementById('login-screen');
+    const signupScreen = document.getElementById('signup-screen');
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
     const pageSections = document.querySelectorAll('.page-section');
     const navLinks = document.querySelectorAll('.nav-link');
     const pageTitle = document.getElementById('page-title');
     const mobileSidebar = document.getElementById('mobile-sidebar');
     const mobileMenuButton = document.getElementById('mobile-menu-button');
     const closeMobileMenuButton = document.getElementById('close-mobile-menu');
-
+    const userNameDisplay = document.getElementById('user-name');
+    const profileBtn = document.getElementById('profile-btn');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    
     // Card display elements
     const cardDisplay = document.getElementById('smart-card-display');
     const activeAccountName = document.getElementById('active-account-name');
@@ -651,11 +917,14 @@
     const cardFrozenOverlayControl = document.getElementById('card-frozen-overlay-control');
     const freezeToggle = document.getElementById('freeze-toggle');
     const accountSelector = document.getElementById('account-selector');
-    const freezeBtnQuick = document.getElementById('freeze-card-btn-quick');
-
+    
     // Modal elements
+    const onboardingModal = document.getElementById('onboarding-modal');
+    const qrScannerModal = document.getElementById('qr-scanner-modal');
     const mapModal = document.getElementById('map-modal');
-    const locateCardBtn = document.getElementById('locate-card-btn');
+    const addMoneyModal = document.getElementById('add-money-modal');
+    const sendMoneyModal = document.getElementById('send-money-modal');
+    const locateCardBtnSettings = document.getElementById('locate-card-btn-settings');
     const closeMapModalBtn = document.getElementById('close-map-modal');
     const newVaultModal = document.getElementById('new-vault-modal');
     const newBudgetModal = document.getElementById('new-budget-modal');
@@ -664,6 +933,8 @@
     const confirmDeleteModal = document.getElementById('confirm-delete-modal');
 
     // Modal Forms & Buttons
+    const addMoneyForm = document.getElementById('add-money-form');
+    const sendMoneyForm = document.getElementById('send-money-form');
     const newVaultForm = document.getElementById('new-vault-form');
     const newBudgetForm = document.getElementById('new-budget-form');
     const updateBudgetForm = document.getElementById('update-budget-form');
@@ -673,6 +944,7 @@
     // Transactions & Export
     const transactionList = document.getElementById('transaction-list');
     const exportSpendingBtn = document.getElementById('export-spending-btn');
+    const exportSavingsHistoryBtn = document.getElementById('export-savings-history-btn');
     const exportVaultHistoryBtn = document.getElementById('export-vault-history-btn');
     const exportBudgetHistoryBtn = document.getElementById('export-budget-history-btn');
     
@@ -680,10 +952,28 @@
     const themeSelector = document.getElementById('theme-selector');
     
     // History elements
+    const showSavingsHistoryBtn = document.getElementById('show-savings-history-btn');
     const showVaultHistoryBtn = document.getElementById('show-vault-history-btn');
     const showBudgetHistoryBtn = document.getElementById('show-budget-history-btn');
+    const savingsHistoryContainer = document.getElementById('savings-history-container');
     const vaultHistoryContainer = document.getElementById('vault-history-container');
     const budgetHistoryContainer = document.getElementById('budget-history-container');
+
+    // Simulation
+    const simulatePayoutBtn = document.getElementById('simulate-payout-btn');
+    
+    // Toast Notification
+    const toastNotification = document.getElementById('toast-notification');
+    const toastMessage = document.getElementById('toast-message');
+
+    // AI Advisor elements
+    const aiAdviceContent = document.getElementById('ai-advice-content');
+    const aiActionButton = document.getElementById('ai-action-btn');
+
+    // Notifications
+    const notificationsBtn = document.getElementById('notifications-btn');
+    const notificationsDropdown = document.getElementById('notifications-dropdown');
+    const notificationList = document.getElementById('notification-list');
 
     // --- THEME CUSTOMIZATION ---
     const themes = {
@@ -713,8 +1003,220 @@
         }
     };
 
+    // --- DATA MANIPULATION (BUSINESS LOGIC) ---
+
+    function createBudget(name, limit) {
+        if (budgetsData.length >= MAX_BUDGETS || !name || limit <= 0) return false;
+        
+        const newBudgetId = name.toLowerCase().replace(/\s+/g, '-') + Date.now();
+        budgetsData.unshift({
+            id: newBudgetId, name: name, spent: 0, limit: limit, icon: 'receipt', color: 'purple', isCardAssigned: false
+        });
+        budgetHistoryData.unshift({
+            date: getCurrentDate(), action: 'Created', details: `${name} Budget (Limit: Rs ${limit.toLocaleString('en-IN')})`
+        });
+        return true;
+    }
+
+    function updateBudget(id, newName, newLimit) {
+        const budget = budgetsData.find(b => b.id === id);
+        if(!budget || !newName || newLimit <= 0) return false;
+
+        const oldLimit = budget.limit;
+        budget.name = newName;
+        budget.limit = newLimit;
+        
+        budgetHistoryData.unshift({
+            date: getCurrentDate(), action: 'Updated', details: `${newName} (Limit: Rs ${oldLimit.toLocaleString('en-IN')} -> Rs ${newLimit.toLocaleString('en-IN')})`
+        });
+        return true;
+    }
+
+    function deleteBudget(id) {
+        const budgetIndex = budgetsData.findIndex(b => b.id === id);
+        if (budgetIndex === -1) return;
+        
+        budgetsData.splice(budgetIndex, 1);
+        budgetHistoryData.unshift({
+            date: getCurrentDate(), action: 'Deleted', details: `Budget item removed.`
+        });
+    }
+
+    function createVault(name, target) {
+        if (!name || target <= 0) return false;
+
+        vaultsData.push({
+            id: name.toLowerCase().replace(/\s+/g, '-') + Date.now(),
+            name: name, current: 0, target: target, icon: 'package-plus', color: 'teal'
+        });
+        vaultHistoryData.unshift({
+            date: getCurrentDate(), action: 'Created', details: `${name} (Target: Rs ${target.toLocaleString('en-IN')})`
+        });
+        return true;
+    }
+
+    function deleteVault(id) {
+        const vaultIndex = vaultsData.findIndex(v => v.id === id);
+        if (vaultIndex === -1) return;
+        
+        const vault = vaultsData[vaultIndex];
+        if (vault.current > 0) {
+            accounts.find(a => a.id === 'current').balance += vault.current;
+        }
+        
+        vaultsData.splice(vaultIndex, 1);
+        vaultHistoryData.unshift({
+            date: getCurrentDate(), action: 'Deleted', details: `Vault "${vault.name}" removed. Rs ${vault.current.toLocaleString('en-IN')} returned.`
+        });
+    }
+
+    function handleVaultTransaction(vaultId, actionType, amount) {
+        const vault = vaultsData.find(v => v.id === vaultId);
+        const currentAccount = accounts.find(a => a.id === 'current');
+
+        if (!vault || !currentAccount || !amount || amount <= 0) return false;
+
+        if (actionType === 'deposit') {
+            if (currentAccount.balance >= amount) {
+                vault.current += amount;
+                currentAccount.balance -= amount;
+                 if (vault.isSavingsAccount) {
+                    savingsAccountHistoryData.unshift({ date: getCurrentDate(), action: 'Deposit', details: `Manual Deposit`, amount: amount });
+                } else {
+                    vaultHistoryData.unshift({ date: getCurrentDate(), action: 'Deposited', details: `Rs ${amount.toLocaleString('en-IN')} to ${vault.name}` });
+                }
+                return true;
+            } else {
+                showToast('Insufficient funds in Current Account.');
+                return false;
+            }
+        } else if (actionType === 'withdraw') {
+            if (vault.current >= amount) {
+                vault.current -= amount;
+                currentAccount.balance += amount;
+                if (vault.isSavingsAccount) {
+                    savingsAccountHistoryData.unshift({ date: getCurrentDate(), action: 'Withdrawal', details: `Manual Withdrawal`, amount: -amount });
+                } else {
+                    vaultHistoryData.unshift({ date: getCurrentDate(), action: 'Withdrew', details: `Rs ${amount.toLocaleString('en-IN')} from ${vault.name}` });
+                }
+                return true;
+            } else {
+                showToast('Insufficient funds in vault.');
+                return false;
+            }
+        }
+    }
+
+    function calculateAndApplyMonthlyReturns() {
+        const savingsAccount = vaultsData.find(v => v.isSavingsAccount);
+        if (savingsAccount) {
+            const monthlyReturnRate = savingsAccount.returnRate / 12;
+            const profit = savingsAccount.current * monthlyReturnRate;
+            savingsAccount.current += profit;
+
+            savingsAccountHistoryData.unshift({
+                date: getCurrentDate(), action: 'Profit Payout', details: `Monthly interest credited`, amount: profit
+            });
+            
+            showToast(`Profit of Rs ${profit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has been added.`);
+        }
+    }
+
+    function getSmartAIAdvice() {
+        // Check for high budget usage
+        for (const budget of budgetsData) {
+            const usage = budget.spent / budget.limit;
+            if (usage > 0.9) {
+                return { text: `Warning: Your '${budget.name}' budget is ${Math.round(usage * 100)}% used. Be mindful of your spending.`, action: 'none' };
+            }
+        }
+
+        // Check for near-complete vaults
+        for (const vault of vaultsData) {
+            if (!vault.isSavingsAccount && vault.target) {
+                const progress = vault.current / vault.target;
+                if (progress > 0.8 && progress < 1) {
+                    return { text: `Congratulations! You're ${Math.round(progress * 100)}% of the way to your '${vault.name}' goal. Keep it up!`, action: 'none' };
+                }
+            }
+        }
+        
+        // Suggest assigning a card
+        const assignedCount = budgetsData.filter(b => b.isCardAssigned).length;
+        const unassignedBudgets = budgetsData.filter(b => !b.isCardAssigned);
+        if (assignedCount < MAX_CARD_ASSIGNMENTS && unassignedBudgets.length > 0) {
+            return { text: `You have a free card slot. Try assigning your '${unassignedBudgets[0].name}' budget to your card for easier spending.`, action: 'none' };
+        }
+
+        // Fallback to a random generic tip
+        const genericTips = aiAdvicePool.filter(a => a.action === 'none');
+        return genericTips[Math.floor(Math.random() * genericTips.length)];
+    }
+
+    // --- UI RENDERING & HELPERS ---
+    
+    function getCurrentDate() {
+        return new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    
+    function showToast(message) {
+        toastMessage.textContent = message;
+        toastNotification.classList.remove('translate-y-20', 'opacity-0');
+        setTimeout(() => {
+            toastNotification.classList.add('translate-y-20', 'opacity-0');
+        }, 3000); // Hide after 3 seconds
+    }
+
+    function exportToCsv(filename, headers, data) {
+        const rows = data.map(item =>
+            headers.map(header => {
+                let val = item[header.toLowerCase()];
+                if (typeof val === 'number') val = val.toLocaleString('en-IN');
+                return `"${(val || '').toString().replace(/"/g, '""')}"`;
+            }).join(',')
+        );
+        const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n" + rows.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function showPage(targetId) {
+        pageSections.forEach(section => section.classList.toggle('hidden', section.id !== targetId));
+        const targetLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
+        if (targetLink) pageTitle.textContent = targetLink.querySelector('span').textContent;
+        navLinks.forEach(link => {
+            link.classList.remove('bg-slate-700');
+            if (link.dataset.target === targetId) link.classList.add('bg-slate-700');
+        });
+        mobileSidebar.classList.add('-translate-x-full');
+    }
+    
+    function generateThemeSelector() {
+        const currentTheme = loadTheme();
+        if (!themeSelector) return;
+        themeSelector.innerHTML = '';
+        for (const themeName in themes) {
+            const theme = themes[themeName];
+            const isActive = themeName === currentTheme;
+            const button = document.createElement('button');
+            button.className = `theme-btn p-4 rounded-lg border-2 ${isActive ? 'border-white' : 'border-transparent'} transition-all`;
+            button.dataset.theme = themeName;
+            button.innerHTML = `
+                <div class="h-12 w-full rounded-md mb-2" style="background: linear-gradient(135deg, ${theme['--color-card-gradient-from']}, ${theme['--color-card-gradient-to']})"></div>
+                <p class="font-medium">${themeName}</p>
+            `;
+            themeSelector.appendChild(button);
+        }
+    }
+    
     function applyTheme(themeName) {
         const theme = themes[themeName];
+        if (!theme) return;
         for (const [key, value] of Object.entries(theme)) {
             document.documentElement.style.setProperty(key, value);
         }
@@ -730,111 +1232,53 @@
         return savedTheme;
     }
 
-    function generateThemeSelector() {
-        const currentTheme = loadTheme();
-        themeSelector.innerHTML = '';
-        for (const themeName in themes) {
-            const theme = themes[themeName];
-            const isActive = themeName === currentTheme;
-            const button = document.createElement('button');
-            button.className = `theme-btn p-4 rounded-lg border-2 ${isActive ? 'border-white' : 'border-transparent'} transition-all`;
-            button.dataset.theme = themeName;
-            button.innerHTML = `
-                <div class="h-12 w-full rounded-md mb-2" style="background: linear-gradient(135deg, ${theme['--color-card-gradient-from']}, ${theme['--color-card-gradient-to']})"></div>
-                <p class="font-medium">${themeName}</p>
-            `;
-            themeSelector.appendChild(button);
-        }
-    }
-
-    themeSelector.addEventListener('click', (e) => {
-        const themeBtn = e.target.closest('.theme-btn');
-        if (themeBtn) {
-            const themeName = themeBtn.dataset.theme;
-            applyTheme(themeName);
-            saveTheme(themeName);
-            document.querySelectorAll('.theme-btn').forEach(btn => {
-                btn.classList.toggle('border-white', btn.dataset.theme === themeName);
-                 btn.classList.toggle('border-transparent', btn.dataset.theme !== themeName);
-            });
-        }
-    });
-
-    // --- MAIN FUNCTIONS ---
-    function getCurrentDate() {
-        return new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-    
-    function exportToCsv(filename, headers, data) {
-        const rows = data.map(item =>
-            headers.map(header => `"${(item[header.toLowerCase()] || '').toString().replace(/"/g, '""')}"`).join(',')
-        );
-        const csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + "\n" + rows.join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    function showPage(targetId) {
-        pageSections.forEach(section => {
-            section.classList.toggle('hidden', section.id !== targetId);
-        });
-        const targetLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
-        if (targetLink) {
-            pageTitle.textContent = targetLink.querySelector('span').textContent;
-        }
-        navLinks.forEach(link => {
-            link.classList.remove('bg-slate-700');
-            if (link.dataset.target === targetId) {
-                link.classList.add('bg-slate-700');
-            }
-        });
-        mobileSidebar.classList.add('-translate-x-full');
-    }
-
     function updateUI() {
-        rebuildCardAccounts();
-        const activeAccount = accounts.find(acc => acc.id === activeAccountId);
-        if (activeAccount) {
-            activeAccountName.textContent = activeAccount.name;
-            activeAccountNameControl.textContent = activeAccount.name;
-        } else { // Fallback if active card account was deleted
-            activeAccountId = 'current';
-            const currentAcc = accounts.find(acc => acc.id === 'current');
-            activeAccountName.textContent = currentAcc.name;
-            activeAccountNameControl.textContent = currentAcc.name;
-        }
-        
-        cardBalance.textContent = `Rs ${accounts.find(a => a.id === 'current').balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-        cardFrozenOverlay.classList.toggle('hidden', !isCardFrozen);
-        cardFrozenOverlayControl.classList.toggle('hidden', !isCardFrozen);
-        freezeToggle.checked = isCardFrozen;
-        [cardDisplay, cardDisplayControl].forEach(el => el.classList.toggle('grayscale', isCardFrozen));
+        try {
+            rebuildCardAccounts();
+            
+            const activeAccount = accounts.find(acc => acc.id === activeAccountId);
+            if (!activeAccount) activeAccountId = 'current';
+            
+            const currentActiveAccount = accounts.find(acc => acc.id === activeAccountId);
+            if(activeAccountName) activeAccountName.textContent = currentActiveAccount.name;
+            if(activeAccountNameControl) activeAccountNameControl.textContent = currentActiveAccount.name;
+            
+            if(cardBalance) cardBalance.textContent = `Rs ${accounts.find(a => a.id === 'current').balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            if(cardFrozenOverlay) cardFrozenOverlay.classList.toggle('hidden', !isCardFrozen);
+            if(cardFrozenOverlayControl) cardFrozenOverlayControl.classList.toggle('hidden', !isCardFrozen);
+            if(freezeToggle) freezeToggle.checked = isCardFrozen;
+            [cardDisplay, cardDisplayControl].forEach(el => { if(el) el.classList.toggle('grayscale', isCardFrozen) });
 
-        populateAccountSelector();
-        renderDashboardItems();
-        renderBudgetTotals();
-        renderBudgets();
+            if (currentUser && userNameDisplay) {
+                userNameDisplay.textContent = currentUser.name;
+            }
+
+            populateAccountSelector();
+            renderDashboardItems();
+            renderBudgets();
+            renderVaults();
+            renderAllHistory();
+            populateTransactions();
+            renderNotifications();
+            displayAIAdvice();
+
+            lucide.createIcons();
+        } catch (error) {
+            console.error("Failed to update UI:", error);
+        }
     }
 
-    // Rebuild the list of accounts assignable to the card
     function rebuildCardAccounts() {
         const assignedBudgets = budgetsData.filter(b => b.isCardAssigned);
         const currentAccount = { id: 'current', name: 'Current Account', balance: accounts.find(a=>a.id==='current').balance, type: 'account' };
         
         accounts = [currentAccount, ...assignedBudgets.map(b => ({
-            id: b.id,
-            name: `${b.name} Jar`,
-            balance: b.limit - b.spent,
-            type: 'budget'
+            id: b.id, name: `${b.name} Jar`, balance: b.limit - b.spent, type: 'budget'
         }))];
     }
 
     function populateAccountSelector() {
+        if (!accountSelector) return;
         accountSelector.innerHTML = '';
         accounts.forEach(account => {
             const isChecked = account.id === activeAccountId;
@@ -849,10 +1293,10 @@
                 </label>
             `);
         });
-        lucide.createIcons();
     }
     
     function populateTransactions() {
+        if (!transactionList) return;
         transactionList.innerHTML = '';
         transactionsData.forEach(tx => {
             const amountClass = tx.amount > 0 ? 'text-green-400' : 'text-slate-300';
@@ -862,7 +1306,7 @@
                     <td class="p-4">${tx.date}</td>
                     <td class="p-4 font-medium">${tx.desc}</td>
                     <td class="p-4 text-slate-400">${tx.cat}</td>
-                    <td class="p-4 text-right font-mono ${amountClass}">${sign}Rs ${Math.abs(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td class="p-4 text-right font-mono ${amountClass}">${sign}Rs ${Math.abs(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 </tr>
             `);
         });
@@ -870,6 +1314,9 @@
     
     function renderDashboardItems() {
         const dashboardBudgets = document.getElementById('dashboard-budgets');
+        const dashboardVaults = document.getElementById('dashboard-vaults');
+        if (!dashboardBudgets || !dashboardVaults) return;
+        
         dashboardBudgets.innerHTML = '';
         budgetsData.slice(0, 3).forEach(budget => {
             const percentage = budget.limit > 0 ? Math.round((budget.spent / budget.limit) * 100) : 0;
@@ -882,7 +1329,7 @@
                         <span class="font-medium">${budget.name}</span>
                     </div>
                     <div class="text-center my-auto py-2">
-                        <p class="text-2xl font-bold font-mono">Rs ${budget.spent.toLocaleString()}</p>
+                        <p class="text-2xl font-bold font-mono">Rs ${budget.spent.toLocaleString('en-IN')}</p>
                         <p class="font-medium text-sm mt-1" style="color: ${percentageColor}">${percentage}% Used</p>
                     </div>
                     <div class="w-full progress-bar-bg rounded-full h-2.5 mt-auto">
@@ -892,50 +1339,55 @@
             `);
         });
 
-        const dashboardVaults = document.getElementById('dashboard-vaults');
         dashboardVaults.innerHTML = '';
         let totalSaved = 0;
         vaultsData.forEach(vault => {
             totalSaved += vault.current;
-            const percentage = vault.target > 0 ? Math.round((vault.current / vault.target) * 100) : 0;
+            const isSavings = vault.isSavingsAccount;
+            const percentage = !isSavings && vault.target > 0 ? Math.round((vault.current / vault.target) * 100) : 0;
             dashboardVaults.insertAdjacentHTML('beforeend', `
-                 <div class="bg-slate-900/50 p-4 rounded-xl flex flex-col h-full">
+                 <div class="bg-slate-900/50 p-4 rounded-xl flex flex-col h-full ${isSavings ? 'border border-green-500/30' : ''}">
                     <div class="flex items-center space-x-3">
                          <div class="p-2 bg-${vault.color}-500/20 rounded-lg"><i data-lucide="${vault.icon}" class="w-5 h-5 text-${vault.color}-400"></i></div>
                         <span class="font-medium">${vault.name}</span>
                     </div>
                     <div class="text-center my-auto py-2">
-                        <p class="text-2xl font-bold font-mono">Rs ${vault.current.toLocaleString()}</p>
-                        <p class="font-medium text-sm mt-1" style="color: var(--color-primary)">${percentage}% Complete</p>
+                        <p class="text-2xl font-bold font-mono">Rs ${isSavings ? Math.floor(vault.current).toLocaleString('en-IN') : vault.current.toLocaleString('en-IN')}</p>
+                        <p class="font-medium text-sm mt-1" style="color: var(--color-primary)">${isSavings ? `${(vault.returnRate * 100).toFixed(0)}% APR` : `${percentage}% Complete`}</p>
                     </div>
+                    ${!isSavings ? `
                     <div class="w-full progress-bar-bg rounded-full h-2.5 mt-auto">
                         <div class="progress-bar-fill h-2.5 rounded-full" style="width: ${percentage}%"></div>
-                    </div>
+                    </div>` : '<div class="h-2.5 mt-auto"></div>' }
                 </div>
             `);
         });
         
         const totalSavedVaultsPage = document.getElementById('total-saved-vaults-page');
-        if(totalSavedVaultsPage) totalSavedVaultsPage.textContent = `Rs ${totalSaved.toLocaleString()}`;
-
-        lucide.createIcons();
+        if(totalSavedVaultsPage) totalSavedVaultsPage.textContent = `Rs ${totalSaved.toLocaleString('en-IN')}`;
     }
     
     function renderBudgetTotals() {
+        const totalBudgetedEl = document.getElementById('total-budgeted');
+        if (!totalBudgetedEl) return;
+        
         const totalBudgeted = budgetsData.reduce((sum, b) => sum + b.limit, 0);
         const totalSpent = budgetsData.reduce((sum, b) => sum + b.spent, 0);
         const totalRemaining = totalBudgeted - totalSpent;
         
-        document.getElementById('total-budgeted').textContent = `Rs ${totalBudgeted.toLocaleString()}`;
-        document.getElementById('total-spent').textContent = `Rs ${totalSpent.toLocaleString()}`;
-        document.getElementById('total-remaining').textContent = `Rs ${totalRemaining.toLocaleString()}`;
+        totalBudgetedEl.textContent = `Rs ${totalBudgeted.toLocaleString('en-IN')}`;
+        document.getElementById('total-spent').textContent = `Rs ${totalSpent.toLocaleString('en-IN')}`;
+        document.getElementById('total-remaining').textContent = `Rs ${totalRemaining.toLocaleString('en-IN')}`;
     }
 
     function renderBudgets() {
         const container = document.getElementById('budgets-list');
+        if (!container) return;
+        
         container.innerHTML = '';
         const assignedCount = budgetsData.filter(b => b.isCardAssigned).length;
         const canAssignMore = assignedCount < MAX_CARD_ASSIGNMENTS;
+        const baseButtonClasses = "card-assign-btn text-xs py-1 px-2 rounded";
 
         budgetsData.forEach((budget, index) => {
             const percentage = budget.limit > 0 ? Math.round((budget.spent / budget.limit) * 100) : 0;
@@ -944,11 +1396,11 @@
             
             let cardAssignmentButton;
             if (budget.isCardAssigned) {
-                cardAssignmentButton = `<button class="card-assign-btn text-xs btn-secondary py-1 px-2 rounded" data-id="${budget.id}" data-action="unassign">Unassign</button>`;
+                cardAssignmentButton = `<button class="${baseButtonClasses} btn-secondary" data-id="${budget.id}" data-action="unassign">Unassign</button>`;
             } else if (canAssignMore) {
-                cardAssignmentButton = `<button class="card-assign-btn text-xs btn-primary py-1 px-2 rounded" data-id="${budget.id}" data-action="assign">Assign to Card</button>`;
+                cardAssignmentButton = `<button class="${baseButtonClasses} btn-primary" data-id="${budget.id}" data-action="assign">Assign to Card</button>`;
             } else {
-                cardAssignmentButton = `<button class="text-xs btn-disabled py-1 px-2 rounded" disabled>Slots Full</button>`;
+                cardAssignmentButton = `<button class="${baseButtonClasses} btn-disabled" disabled>Slots Full</button>`;
             }
 
             container.insertAdjacentHTML('beforeend', `
@@ -958,7 +1410,7 @@
                             <div class="p-3 bg-${budget.color}-500/20 rounded-lg"><i data-lucide="${budget.icon}" class="w-6 h-6 text-${budget.color}-400"></i></div>
                             <div>
                                 <h4 class="font-semibold text-lg flex items-center">${budget.name} ${budget.isCardAssigned ? '<i data-lucide="credit-card" class="w-4 h-4 text-green-400 ml-2"></i>' : ''}</h4>
-                                <p class="text-sm text-slate-400">Spent <span class="font-mono">Rs ${budget.spent.toLocaleString()}</span> of <span class="font-mono">Rs ${budget.limit.toLocaleString()}</span></p>
+                                <p class="text-sm text-slate-400">Spent <span class="font-mono">Rs ${budget.spent.toLocaleString('en-IN')}</span> of <span class="font-mono">Rs ${budget.limit.toLocaleString('en-IN')}</span></p>
                             </div>
                         </div>
                         <div class="text-right">
@@ -979,6 +1431,8 @@
 
         const newBudgetBtn = document.getElementById('new-budget-btn');
         const budgetCountText = document.getElementById('budget-count-text');
+        if (!newBudgetBtn || !budgetCountText) return;
+
         if (budgetsData.length >= MAX_BUDGETS) {
             newBudgetBtn.classList.add('btn-disabled');
             newBudgetBtn.disabled = true;
@@ -990,45 +1444,91 @@
         }
 
         renderBudgetTotals();
-        lucide.createIcons();
     }
 
     function renderVaults() {
-        const container = document.getElementById('vaults-list');
-        container.innerHTML = '';
-        vaultsData.forEach(vault => {
+        const savingsContainer = document.getElementById('savings-account-container');
+        const goalsContainer = document.getElementById('vaults-list');
+        if (!savingsContainer || !goalsContainer) return;
+        
+        savingsContainer.innerHTML = '';
+        goalsContainer.innerHTML = '';
+        
+        const savingsAccount = vaultsData.find(v => v.isSavingsAccount);
+        const goalVaults = vaultsData.filter(v => !v.isSavingsAccount);
+
+        if (savingsAccount) {
+            savingsContainer.insertAdjacentHTML('beforeend', `
+                <div class="bg-slate-900/50 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between border-2 border-green-500/50">
+                    <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                        <div class="p-3 bg-green-500/20 rounded-lg"><i data-lucide="${savingsAccount.icon}" class="w-8 h-8 text-green-400"></i></div>
+                        <div>
+                            <h4 class="font-semibold text-lg">${savingsAccount.name}</h4>
+                            <p class="text-sm text-slate-400">Saved: Rs ${Math.floor(savingsAccount.current).toLocaleString('en-IN')}</p>
+                        </div>
+                    </div>
+                    <div class="text-center md:text-right mb-4 md:mb-0 md:mx-auto">
+                        <p class="text-2xl font-bold font-mono">Rs ${Math.floor(savingsAccount.current).toLocaleString('en-IN')}</p>
+                        <p class="font-medium mt-1 text-green-400">Interest Bearing (${(savingsAccount.returnRate * 100).toFixed(0)}% APR)</p>
+                    </div>
+                    <div class="flex gap-4 md:flex-col md:w-36">
+                        <button class="vault-action-btn flex-1 btn-secondary py-2 rounded-lg" data-id="${savingsAccount.id}" data-type="withdraw">Withdraw</button>
+                        <button class="vault-action-btn flex-1 btn-primary py-2 rounded-lg" data-id="${savingsAccount.id}" data-type="deposit">Deposit</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        goalVaults.forEach(vault => {
             const percentage = vault.target > 0 ? Math.round((vault.current / vault.target) * 100) : 0;
-            container.insertAdjacentHTML('beforeend', `
+            goalsContainer.insertAdjacentHTML('beforeend', `
                 <div class="bg-slate-900/50 p-6 rounded-2xl flex flex-col">
                     <div class="flex items-start justify-between mb-4">
                         <div class="flex items-center space-x-4">
                             <div class="p-3 bg-${vault.color}-500/20 rounded-lg"><i data-lucide="${vault.icon}" class="w-8 h-8 text-${vault.color}-400"></i></div>
-                             <div>
+                                <div>
                                 <h4 class="font-semibold text-lg">${vault.name}</h4>
-                                <p class="text-sm text-slate-400">Target: Rs ${vault.target.toLocaleString()}</p>
+                                <p class="text-sm text-slate-400">Target: Rs ${vault.target.toLocaleString('en-IN')}</p>
                             </div>
                         </div>
                         <button class="delete-item-btn text-slate-500 hover:text-red-500" data-id="${vault.id}" data-type="vault"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                     </div>
                     <div class="text-center my-4 flex-1">
-                        <p class="text-3xl font-bold font-mono">Rs ${vault.current.toLocaleString()}</p>
+                        <p class="text-3xl font-bold font-mono">Rs ${vault.current.toLocaleString('en-IN')}</p>
                         <p class="font-medium mt-1" style="color: var(--color-primary)">${percentage}% Complete</p>
                     </div>
                     <div class="w-full progress-bar-bg rounded-full h-3 mb-4">
                         <div class="progress-bar-fill h-3 rounded-full" style="width: ${percentage}%"></div>
                     </div>
-                     <div class="flex gap-4">
-                         <button class="vault-action-btn flex-1 btn-secondary py-2 rounded-lg" data-id="${vault.id}" data-type="withdraw">Withdraw</button>
-                         <button class="vault-action-btn flex-1 btn-primary py-2 rounded-lg" data-id="${vault.id}" data-type="deposit">Deposit</button>
-                     </div>
+                        <div class="flex gap-4">
+                            <button class="vault-action-btn flex-1 btn-secondary py-2 rounded-lg" data-id="${vault.id}" data-type="withdraw">Withdraw</button>
+                            <button class="vault-action-btn flex-1 btn-primary py-2 rounded-lg" data-id="${vault.id}" data-type="deposit">Deposit</button>
+                        </div>
                 </div>
             `);
         });
-        lucide.createIcons();
     }
     
     function renderAllHistory() {
+        const savingsHistoryList = document.getElementById('savings-history-list');
         const vaultHistoryList = document.getElementById('vault-history-list');
+        const budgetHistoryList = document.getElementById('budget-history-list');
+        if (!savingsHistoryList || !vaultHistoryList || !budgetHistoryList) return;
+        
+        savingsHistoryList.innerHTML = '';
+        savingsAccountHistoryData.forEach(item => {
+            const amountClass = item.amount > 0 ? 'text-green-400' : 'text-red-400';
+            const sign = item.amount > 0 ? '+' : '-';
+            savingsHistoryList.insertAdjacentHTML('beforeend', `
+                <tr class="border-b last:border-b-0" style="border-color: var(--color-border);">
+                    <td class="p-3 text-slate-400">${item.date}</td>
+                    <td class="p-3 font-medium">${item.action}</td>
+                    <td class="p-3">${item.details}</td>
+                    <td class="p-3 text-right font-mono ${amountClass}">${sign}Rs ${Math.abs(item.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                </tr>
+            `);
+        });
+
         vaultHistoryList.innerHTML = '';
         vaultHistoryData.forEach(item => {
             vaultHistoryList.insertAdjacentHTML('beforeend', `
@@ -1040,7 +1540,6 @@
             `);
         });
         
-        const budgetHistoryList = document.getElementById('budget-history-list');
         budgetHistoryList.innerHTML = '';
         budgetHistoryData.forEach(item => {
             budgetHistoryList.insertAdjacentHTML('beforeend', `
@@ -1053,256 +1552,416 @@
         });
     }
 
+    function displayAIAdvice() {
+        const advice = getSmartAIAdvice();
+        if (!aiAdviceContent) return;
+
+        aiAdviceContent.innerHTML = `<p class="text-sm">${advice.text}</p>`;
+        if (advice.action === 'move') {
+            aiActionButton.textContent = `Move Savings`;
+            aiActionButton.classList.remove('hidden');
+        } else {
+            aiActionButton.classList.add('hidden');
+        }
+    }
+
+    function renderNotifications() {
+        if (!notificationList) return;
+        notificationList.innerHTML = '';
+        notificationsData.forEach(notif => {
+            notificationList.insertAdjacentHTML('beforeend', `
+                <div class="p-3 border-b border-slate-600 hover:bg-slate-600/50 flex items-start space-x-3">
+                    <div class="p-1.5 bg-blue-500/20 rounded-full mt-1">
+                        <i data-lucide="${notif.icon}" class="w-4 h-4 text-blue-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm">${notif.text}</p>
+                        <p class="text-xs text-slate-400">${notif.time}</p>
+                    </div>
+                </div>
+            `);
+        });
+    }
+
+    // --- AUTHENTICATION ---
+    function showAuthScreen(screen) {
+        authContainer.classList.remove('hidden');
+        appContainer.classList.add('hidden');
+        if (screen === 'login') {
+            loginScreen.classList.remove('hidden');
+            signupScreen.classList.add('hidden');
+        } else {
+            loginScreen.classList.add('hidden');
+            signupScreen.classList.remove('hidden');
+        }
+    }
+
+    function showApp() {
+        authContainer.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+        updateUI();
+        showPage('dashboard');
+        
+        if (localStorage.getItem('finvault_onboarding_complete') !== 'true') {
+            onboardingModal.classList.remove('hidden');
+        }
+    }
+
+    function login(name) {
+        currentUser = { name: name };
+        localStorage.setItem('finvault_currentUser', JSON.stringify(currentUser));
+        showApp();
+    }
+
+    function logout() {
+        currentUser = null;
+        localStorage.removeItem('finvault_currentUser');
+        showAuthScreen('login');
+    }
+
     // --- EVENT LISTENERS ---
-    document.body.addEventListener('click', (e) => {
-        // Navigation
-        const navLink = e.target.closest('.nav-link');
-        if (navLink) {
-            e.preventDefault();
-            showPage(navLink.dataset.target);
-        }
-
-        // New Item Buttons
-        if (e.target.closest('#new-vault-btn')) newVaultModal.classList.remove('hidden');
-        if (e.target.closest('#new-budget-btn')) newBudgetModal.classList.remove('hidden');
-
-        // Modal Close Buttons
-        const modal = e.target.closest('.fixed.inset-0');
-        if (e.target.dataset.action === 'close' || e.target === modal) {
-            modal.classList.add('hidden');
-        }
-
-        // Update Budget Button
-        const updateBtn = e.target.closest('.update-budget-btn');
-        if(updateBtn) {
-            const budgetId = updateBtn.dataset.id;
-            const budget = budgetsData.find(b => b.id === budgetId);
-            if(budget) {
-                document.getElementById('update-budget-id').value = budget.id;
-                document.getElementById('update-budget-name').value = budget.name;
-                document.getElementById('update-budget-limit').value = budget.limit;
-                updateBudgetModal.classList.remove('hidden');
+    function setupEventListeners() {
+        document.body.addEventListener('click', (e) => {
+            // Navigation
+            const navLink = e.target.closest('.nav-link');
+            if (navLink) {
+                e.preventDefault();
+                showPage(navLink.dataset.target);
             }
-        }
 
-        // Vault Action Button (Deposit/Withdraw)
-        const vaultActionBtn = e.target.closest('.vault-action-btn');
-        if(vaultActionBtn) {
-            const vaultId = vaultActionBtn.dataset.id;
-            const actionType = vaultActionBtn.dataset.type;
-            const vault = vaultsData.find(v => v.id === vaultId);
-            if(vault) {
-                document.getElementById('vault-action-title').textContent = `${actionType.charAt(0).toUpperCase() + actionType.slice(1)} to ${vault.name}`;
-                document.getElementById('vault-action-id').value = vault.id;
-                document.getElementById('vault-action-type').value = actionType;
-                document.getElementById('vault-action-submit').textContent = `Confirm ${actionType.charAt(0).toUpperCase() + actionType.slice(1)}`;
-                vaultActionModal.classList.remove('hidden');
-            }
-        }
-
-        // Delete Item Button
-        const deleteBtn = e.target.closest('.delete-item-btn');
-        if (deleteBtn) {
-            itemToDelete = { id: deleteBtn.dataset.id, type: deleteBtn.dataset.type };
-            const item = itemToDelete.type === 'budget' 
-                ? budgetsData.find(b => b.id === itemToDelete.id)
-                : vaultsData.find(v => v.id === itemToDelete.id);
+            // Quick Actions
+            if (e.target.closest('#add-money-btn')) addMoneyModal.classList.remove('hidden');
+            if (e.target.closest('#send-money-btn')) sendMoneyModal.classList.remove('hidden');
+            if (e.target.closest('#qr-pay-btn')) qrScannerModal.classList.remove('hidden');
             
-            document.getElementById('confirm-delete-title').textContent = `Delete ${item.name}?`;
-            let message = `This will permanently delete the ${itemToDelete.type}.`;
-            if (itemToDelete.type === 'vault' && item.current > 0) {
-                message += ` The remaining balance of Rs ${item.current.toLocaleString()} will be returned to your Current Account.`
+            // AI Advisor
+            if(e.target.closest('#new-advice-btn')) {
+                displayAIAdvice();
             }
-            document.getElementById('confirm-delete-message').textContent = message;
-            confirmDeleteModal.classList.remove('hidden');
-        }
+            if(e.target.closest('#ai-action-btn')) {
+                const advice = getSmartAIAdvice();
+                if (advice.action === 'move' && advice.amount && advice.targetVault) {
+                    const success = handleVaultTransaction(advice.targetVault, 'deposit', advice.amount);
+                    if (success) {
+                        showToast(`Successfully moved Rs ${advice.amount.toLocaleString('en-IN')} to ${advice.targetVault} vault.`);
+                        updateUI();
+                    }
+                }
+            }
 
-        // Card Assignment Button
-        const assignBtn = e.target.closest('.card-assign-btn');
-        if (assignBtn) {
-            const budgetId = assignBtn.dataset.id;
-            const action = assignBtn.dataset.action;
-            const budget = budgetsData.find(b => b.id === budgetId);
-            if (budget) {
-                budget.isCardAssigned = (action === 'assign');
+            // New Item Buttons
+            if (e.target.closest('#new-vault-btn')) {
+                newVaultModal.classList.remove('hidden');
+                document.getElementById('vault-name').focus();
+            }
+            if (e.target.closest('#new-budget-btn')) {
+                newBudgetModal.classList.remove('hidden');
+                document.getElementById('budget-name').focus();
+            }
+
+            // Modal Close Buttons
+            const modal = e.target.closest('.fixed.inset-0');
+            if (e.target.dataset.action === 'close' || e.target === modal) {
+                modal.classList.add('hidden');
+            }
+
+            // Update Budget Button
+            const updateBtn = e.target.closest('.update-budget-btn');
+            if(updateBtn) {
+                const budgetId = updateBtn.dataset.id;
+                const budget = budgetsData.find(b => b.id === budgetId);
+                if(budget) {
+                    document.getElementById('update-budget-id').value = budget.id;
+                    document.getElementById('update-budget-name').value = budget.name;
+                    document.getElementById('update-budget-limit').value = budget.limit;
+                    updateBudgetModal.classList.remove('hidden');
+                }
+            }
+
+            // Vault Action Button
+            const vaultActionBtn = e.target.closest('.vault-action-btn');
+            if(vaultActionBtn) {
+                const vaultId = vaultActionBtn.dataset.id;
+                const actionType = vaultActionBtn.dataset.type;
+                const vault = vaultsData.find(v => v.id === vaultId);
+                if(vault) {
+                    document.getElementById('vault-action-title').textContent = `${actionType.charAt(0).toUpperCase() + actionType.slice(1)} to ${vault.name}`;
+                    document.getElementById('vault-action-id').value = vault.id;
+                    document.getElementById('vault-action-type').value = actionType;
+                    document.getElementById('vault-action-submit').textContent = `Confirm ${actionType.charAt(0).toUpperCase() + actionType.slice(1)}`;
+                    vaultActionModal.classList.remove('hidden');
+                    document.getElementById('vault-action-amount').focus();
+                }
+            }
+
+            // Delete Item Button
+            const deleteBtn = e.target.closest('.delete-item-btn');
+            if (deleteBtn) {
+                itemToDelete = { id: deleteBtn.dataset.id, type: deleteBtn.dataset.type };
+                const item = itemToDelete.type === 'budget' 
+                    ? budgetsData.find(b => b.id === itemToDelete.id)
+                    : vaultsData.find(v => v.id === itemToDelete.id);
+                
+                if (item.isSavingsAccount) {
+                    alert("The main Savings Account cannot be deleted.");
+                    return;
+                }
+
+                document.getElementById('confirm-delete-title').textContent = `Delete ${item.name}?`;
+                let message = `This will permanently delete the ${itemToDelete.type}.`;
+                if (itemToDelete.type === 'vault' && item.current > 0) {
+                    message += ` The remaining balance of Rs ${item.current.toLocaleString('en-IN')} will be returned to your Current Account.`
+                }
+                document.getElementById('confirm-delete-message').textContent = message;
+                confirmDeleteModal.classList.remove('hidden');
+            }
+
+            // Card Assignment Button
+            const assignBtn = e.target.closest('.card-assign-btn');
+            if (assignBtn) {
+                const budgetId = assignBtn.dataset.id;
+                const action = assignBtn.dataset.action;
+                const budget = budgetsData.find(b => b.id === budgetId);
+                if (budget) {
+                    budget.isCardAssigned = (action === 'assign');
+                    updateUI();
+                }
+            }
+
+            // Notifications
+            if (e.target.closest('#notifications-btn')) {
+                notificationsDropdown.classList.toggle('hidden');
+            } else if (!e.target.closest('#notifications-dropdown')) {
+                notificationsDropdown.classList.add('hidden');
+            }
+
+            // Onboarding
+            const onboardingNext = e.target.closest('.onboarding-next');
+            if(onboardingNext) {
+                const currentStep = onboardingNext.closest('[id^="onboarding-step-"]');
+                const nextStepNumber = parseInt(currentStep.id.split('-')[2]) + 1;
+                currentStep.classList.add('hidden');
+                document.getElementById(`onboarding-step-${nextStepNumber}`).classList.remove('hidden');
+            }
+            const onboardingPrev = e.target.closest('.onboarding-prev');
+            if(onboardingPrev) {
+                const currentStep = onboardingPrev.closest('[id^="onboarding-step-"]');
+                const prevStepNumber = parseInt(currentStep.id.split('-')[2]) - 1;
+                currentStep.classList.add('hidden');
+                document.getElementById(`onboarding-step-${prevStepNumber}`).classList.remove('hidden');
+            }
+            if(e.target.closest('.onboarding-finish')) {
+                onboardingModal.classList.add('hidden');
+                localStorage.setItem('finvault_onboarding_complete', 'true');
+            }
+
+            // Auth switching
+            if (e.target.closest('#show-signup')) {
+                e.preventDefault();
+                showAuthScreen('signup');
+            }
+            if (e.target.closest('#show-login')) {
+                e.preventDefault();
+                showAuthScreen('login');
+            }
+            if (e.target.closest('#logout-btn')) {
+                e.preventDefault();
+                logout();
+            }
+        });
+
+        profileBtn.addEventListener('click', () => {
+            profileDropdown.classList.toggle('hidden');
+        });
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            const { id, type } = itemToDelete;
+            if (type === 'budget') {
+                deleteBudget(id);
+            } else if (type === 'vault') {
+                deleteVault(id);
+            }
+            
+            confirmDeleteModal.classList.add('hidden');
+            updateUI();
+            itemToDelete = { id: null, type: null };
+        });
+
+        accountSelector.addEventListener('change', (e) => {
+            if(e.target.name === 'activeAccount') {
+                activeAccountId = e.target.value;
                 updateUI();
             }
-        }
-    });
-
-    confirmDeleteBtn.addEventListener('click', () => {
-        const { id, type } = itemToDelete;
-        if (type === 'budget') {
-            budgetsData = budgetsData.filter(b => b.id !== id);
-            budgetHistoryData.unshift({
-                date: getCurrentDate(), action: 'Deleted', details: `Budget item removed.`
-            });
-        } else if (type === 'vault') {
-            const vault = vaultsData.find(v => v.id === id);
-            if (vault.current > 0) {
-                accounts.find(a => a.id === 'current').balance += vault.current;
+        });
+        
+        freezeToggle.addEventListener('change', () => { isCardFrozen = !isCardFrozen; updateUI(); });
+        
+        locateCardBtnSettings.addEventListener('click', () => mapModal.classList.remove('hidden'));
+        closeMapModalBtn.addEventListener('click', () => mapModal.classList.add('hidden'));
+        
+        mobileMenuButton.addEventListener('click', () => mobileSidebar.classList.remove('-translate-x-full'));
+        closeMobileMenuButton.addEventListener('click', () => mobileSidebar.classList.add('-translate-x-full'));
+        
+        addMoneyForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const amount = parseFloat(e.target.elements['add-money-amount'].value);
+            if (amount > 0) {
+                accounts.find(a => a.id === 'current').balance += amount;
+                transactionsData.unshift({
+                    date: getCurrentDate(), desc: 'Deposit from external source', cat: 'Income', amount: amount
+                });
+                showToast(`Rs ${amount.toLocaleString('en-IN')} added successfully.`);
+                updateUI();
+                addMoneyModal.classList.add('hidden');
+                e.target.reset();
             }
-            vaultsData = vaultsData.filter(v => v.id !== id);
-            vaultHistoryData.unshift({
-                date: getCurrentDate(), action: 'Deleted', details: `Vault "${vault.name}" removed. Rs ${vault.current.toLocaleString()} returned.`
-            });
-            renderVaults();
-        }
+        });
         
-        confirmDeleteModal.classList.add('hidden');
-        renderAllHistory();
-        updateUI(); // This will re-render budgets and update card accounts
-        itemToDelete = { id: null, type: null };
-    });
-
-    accountSelector.addEventListener('change', (e) => {
-        if(e.target.name === 'activeAccount') {
-            activeAccountId = e.target.value;
-            updateUI();
-        }
-    });
-    
-    function toggleFreeze() { isCardFrozen = !isCardFrozen; updateUI(); }
-    freezeToggle.addEventListener('change', toggleFreeze);
-    freezeBtnQuick.addEventListener('click', toggleFreeze);
-    
-    locateCardBtn.addEventListener('click', () => mapModal.classList.remove('hidden'));
-    closeMapModalBtn.addEventListener('click', () => mapModal.classList.add('hidden'));
-    
-    mobileMenuButton.addEventListener('click', () => mobileSidebar.classList.remove('-translate-x-full'));
-    closeMobileMenuButton.addEventListener('click', () => mobileSidebar.classList.add('-translate-x-full'));
-    
-    newVaultForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = e.target.elements['vault-name'].value;
-        const target = parseFloat(e.target.elements['vault-target'].value);
-        if (name && target > 0) {
-            vaultsData.unshift({
-                id: name.toLowerCase().replace(/\s+/g, '-'),
-                name: name, current: 0, target: target, icon: 'package-plus', color: 'teal'
-            });
-            vaultHistoryData.unshift({
-                date: getCurrentDate(), action: 'Created', details: `${name} (Target: Rs ${target.toLocaleString()})`
-            });
-            renderVaults();
-            renderDashboardItems();
-            renderAllHistory();
-            newVaultModal.classList.add('hidden');
-            e.target.reset();
-        }
-    });
-
-    newBudgetForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        if (budgetsData.length >= MAX_BUDGETS) return;
-        const name = e.target.elements['budget-name'].value;
-        const limit = parseFloat(e.target.elements['budget-limit'].value);
-        if (name && limit > 0) {
-            const newBudgetId = name.toLowerCase().replace(/\s+/g, '-');
-            budgetsData.unshift({
-                id: newBudgetId, name: name, spent: 0, limit: limit, icon: 'receipt', color: 'purple', isCardAssigned: false
-            });
-            budgetHistoryData.unshift({
-                date: getCurrentDate(), action: 'Created', details: `${name} Budget (Limit: Rs ${limit.toLocaleString()})`
-            });
-            updateUI(); // Re-renders budgets, dashboard, etc.
-            renderAllHistory();
-            newBudgetModal.classList.add('hidden');
-            e.target.reset();
-        }
-    });
-
-    updateBudgetForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const budgetId = e.target.elements['update-budget-id'].value;
-        const newName = e.target.elements['update-budget-name'].value;
-        const newLimit = parseFloat(e.target.elements['update-budget-limit'].value);
-        
-        const budget = budgetsData.find(b => b.id === budgetId);
-
-        if(budget && newName && newLimit > 0) {
-            const oldLimit = budget.limit;
-            budget.name = newName;
-            budget.limit = newLimit;
+        sendMoneyForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const amount = parseFloat(e.target.elements['send-money-amount'].value);
+            const recipient = e.target.elements['send-money-recipient'].value;
+            const currentAccount = accounts.find(a => a.id === 'current');
             
-            budgetHistoryData.unshift({
-                date: getCurrentDate(), action: 'Updated', details: `${newName} (Limit: Rs ${oldLimit.toLocaleString()} -> Rs ${newLimit.toLocaleString()})`
-            });
-            
-            updateUI();
-            renderAllHistory();
-            updateBudgetModal.classList.add('hidden');
-            e.target.reset();
-        }
-    });
-
-    vaultActionForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const vaultId = e.target.elements['vault-action-id'].value;
-        const actionType = e.target.elements['vault-action-type'].value;
-        const amount = parseFloat(e.target.elements['vault-action-amount'].value);
-
-        const vault = vaultsData.find(v => v.id === vaultId);
-        const currentAccount = accounts.find(a => a.id === 'current');
-
-        if (!vault || !currentAccount || !amount || amount <= 0) return;
-
-        if (actionType === 'deposit') {
-            if (currentAccount.balance >= amount) {
-                vault.current += amount;
+            if (amount > 0 && recipient && currentAccount.balance >= amount) {
                 currentAccount.balance -= amount;
-                vaultHistoryData.unshift({
-                    date: getCurrentDate(), action: 'Deposited', details: `Rs ${amount.toLocaleString()} to ${vault.name}`
+                transactionsData.unshift({
+                    date: getCurrentDate(), desc: `Sent to ${recipient}`, cat: 'Transfer', amount: -amount
                 });
-            } else {
-                alert('Insufficient funds in Current Account.');
-                return;
+                showToast(`Rs ${amount.toLocaleString('en-IN')} sent successfully.`);
+                updateUI();
+                sendMoneyModal.classList.add('hidden');
+                e.target.reset();
+            } else if (currentAccount.balance < amount) {
+                showToast('Insufficient funds.');
             }
-        } else if (actionType === 'withdraw') {
-            if (vault.current >= amount) {
-                vault.current -= amount;
-                currentAccount.balance += amount;
-                vaultHistoryData.unshift({
-                    date: getCurrentDate(), action: 'Withdrew', details: `Rs ${amount.toLocaleString()} from ${vault.name}`
-                });
-            } else {
-                alert('Insufficient funds in vault.');
-                return;
-            }
-        }
-        
-        renderVaults();
-        renderDashboardItems();
-        updateUI();
-        renderAllHistory();
-        vaultActionModal.classList.add('hidden');
-        e.target.reset();
-    });
-    
-    showVaultHistoryBtn.addEventListener('click', () => {
-        vaultHistoryContainer.classList.toggle('hidden');
-        budgetHistoryContainer.classList.add('hidden');
-    });
+        });
 
-    showBudgetHistoryBtn.addEventListener('click', () => {
-        budgetHistoryContainer.classList.toggle('hidden');
-        vaultHistoryContainer.classList.add('hidden');
-    });
-    
-    exportSpendingBtn.addEventListener('click', () => exportToCsv('spending_history.csv', ['date', 'desc', 'cat', 'amount'], transactionsData));
-    exportVaultHistoryBtn.addEventListener('click', () => exportToCsv('vault_history.csv', ['date', 'action', 'details'], vaultHistoryData));
-    exportBudgetHistoryBtn.addEventListener('click', () => exportToCsv('budget_history.csv', ['date', 'action', 'details'], budgetHistoryData));
+        newVaultForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = e.target.elements['vault-name'].value;
+            const target = parseFloat(e.target.elements['vault-target'].value);
+            if (createVault(name, target)) {
+                updateUI();
+                newVaultModal.classList.add('hidden');
+                e.target.reset();
+            }
+        });
+
+        newBudgetForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = e.target.elements['budget-name'].value;
+            const limit = parseFloat(e.target.elements['budget-limit'].value);
+            if (createBudget(name, limit)) {
+                updateUI();
+                newBudgetModal.classList.add('hidden');
+                e.target.reset();
+            }
+        });
+
+        updateBudgetForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const budgetId = e.target.elements['update-budget-id'].value;
+            const newName = e.target.elements['update-budget-name'].value;
+            const newLimit = parseFloat(e.target.elements['update-budget-limit'].value);
+            
+            if(updateBudget(budgetId, newName, newLimit)) {
+                updateUI();
+                updateBudgetModal.classList.add('hidden');
+                e.target.reset();
+            }
+        });
+
+        vaultActionForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const vaultId = e.target.elements['vault-action-id'].value;
+            const actionType = e.target.elements['vault-action-type'].value;
+            const amount = parseFloat(e.target.elements['vault-action-amount'].value);
+
+            if (handleVaultTransaction(vaultId, actionType, amount)) {
+                updateUI();
+                vaultActionModal.classList.add('hidden');
+                e.target.reset();
+            }
+        });
+        
+        showSavingsHistoryBtn.addEventListener('click', () => {
+            savingsHistoryContainer.classList.toggle('hidden');
+            vaultHistoryContainer.classList.add('hidden');
+            budgetHistoryContainer.classList.add('hidden');
+        });
+
+        showVaultHistoryBtn.addEventListener('click', () => {
+            vaultHistoryContainer.classList.toggle('hidden');
+            savingsHistoryContainer.classList.add('hidden');
+            budgetHistoryContainer.classList.add('hidden');
+        });
+
+        showBudgetHistoryBtn.addEventListener('click', () => {
+            budgetHistoryContainer.classList.toggle('hidden');
+            vaultHistoryContainer.classList.add('hidden');
+            savingsHistoryContainer.classList.add('hidden');
+        });
+        
+        simulatePayoutBtn.addEventListener('click', () => {
+            calculateAndApplyMonthlyReturns();
+            updateUI();
+        });
+        
+        exportSpendingBtn.addEventListener('click', () => exportToCsv('spending_history.csv', ['date', 'desc', 'cat', 'amount'], transactionsData));
+        exportSavingsHistoryBtn.addEventListener('click', () => exportToCsv('savings_account_history.csv', ['date', 'action', 'details', 'amount'], savingsAccountHistoryData));
+        exportVaultHistoryBtn.addEventListener('click', () => exportToCsv('vault_history.csv', ['date', 'action', 'details'], vaultHistoryData));
+        exportBudgetHistoryBtn.addEventListener('click', () => exportToCsv('budget_history.csv', ['date', 'action', 'details'], budgetHistoryData));
+        
+        themeSelector.addEventListener('click', (e) => {
+            const themeBtn = e.target.closest('.theme-btn');
+            if (themeBtn) {
+                const themeName = themeBtn.dataset.theme;
+                applyTheme(themeName);
+                saveTheme(themeName);
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.classList.toggle('border-white', btn.dataset.theme === themeName);
+                    btn.classList.toggle('border-transparent', btn.dataset.theme !== themeName);
+                });
+            }
+        });
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('signup-name').value || 'John Doe';
+            login(name);
+        });
+
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = e.target.elements['signup-name'].value;
+            login(name);
+        });
+    }
+
 
     // --- INITIALIZATION ---
-    document.addEventListener('DOMContentLoaded', () => {
+    function init() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
         generateThemeSelector();
-        updateUI();
-        populateTransactions();
-        renderVaults();
-        renderAllHistory();
-        showPage('dashboard');
-    });
+        setupEventListeners();
+
+        const savedUser = localStorage.getItem('finvault_currentUser');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+            showApp();
+        } else {
+            showAuthScreen('login');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+
+})(); // IIFE End
 </script>
 </body>
 </html>
+
 
