@@ -809,7 +809,7 @@
             activeAccountNameControl.textContent = currentAcc.name;
         }
         
-        cardBalance.textContent = `Rs ${accounts.find(a => a.id === 'current').balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        cardBalance.textContent = `Rs ${accounts.find(a => a.id === 'current').balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
         cardFrozenOverlay.classList.toggle('hidden', !isCardFrozen);
         cardFrozenOverlayControl.classList.toggle('hidden', !isCardFrozen);
         freezeToggle.checked = isCardFrozen;
@@ -843,7 +843,7 @@
                     <input type="radio" id="acc-${account.id}" name="activeAccount" value="${account.id}" class="hidden" ${isChecked ? 'checked' : ''}>
                     <div class="flex-1">
                         <p class="font-medium">${account.name}</p>
-                        <p class="text-sm text-slate-400">Available: Rs ${account.balance.toLocaleString('en-IN')}</p>
+                        <p class="text-sm text-slate-400">Available: Rs ${account.balance.toLocaleString('en-US')}</p>
                     </div>
                     ${isChecked ? '<i data-lucide="check-circle-2" class="w-6 h-6 text-green-500"></i>' : ''}
                 </label>
@@ -862,7 +862,7 @@
                     <td class="p-4">${tx.date}</td>
                     <td class="p-4 font-medium">${tx.desc}</td>
                     <td class="p-4 text-slate-400">${tx.cat}</td>
-                    <td class="p-4 text-right font-mono ${amountClass}">${sign}Rs ${Math.abs(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td class="p-4 text-right font-mono ${amountClass}">${sign}Rs ${Math.abs(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                 </tr>
             `);
         });
